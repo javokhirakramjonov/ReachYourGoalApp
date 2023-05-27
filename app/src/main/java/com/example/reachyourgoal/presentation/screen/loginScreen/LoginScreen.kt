@@ -141,7 +141,7 @@ private fun EmailInput(
 ) {
     OutlinedTextField(
         modifier = modifier,
-        value = uiState.password,
+        value = uiState.email,
         onValueChange = { newValue ->
             viewModel.onEvent(LoginScreenEvent.OnEmailChanged(newValue))
         },

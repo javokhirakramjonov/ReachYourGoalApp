@@ -1,5 +1,7 @@
 package com.example.reachyourgoal.presentation.screen.registerScreen
 
+import android.net.Uri
+
 data class RegisterScreenState(
     val isLoading: Boolean,
     val firstname: String,
@@ -14,5 +16,5 @@ data class RegisterScreenState(
     val emailError: String?,
     val passwordError: String?,
     val passwordRepeatError: String?,
-    val imageUri: String?
+    val imageUri: Uri?
 )

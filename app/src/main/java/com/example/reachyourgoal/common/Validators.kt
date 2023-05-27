@@ -25,7 +25,7 @@ object Validators {
     }
 
     fun passwordRepeatValidator(password: String, passwordRepeat: String): String? {
-        return if(password == passwordRepeat)
+        return if (password == passwordRepeat)
             null
         else
             "Passwords must be same."

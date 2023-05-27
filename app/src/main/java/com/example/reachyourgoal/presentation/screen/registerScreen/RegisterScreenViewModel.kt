@@ -1,5 +1,6 @@
 package com.example.reachyourgoal.presentation.screen.registerScreen
 
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
@@ -67,41 +68,41 @@ class RegisterScreenViewModel @Inject constructor(
 
     private fun onFirstnameChanged(firstname: String) {
         _uiState.update { state ->
-            state.copy(firstname = firstname)
+            state.copy(firstname = firstname, firstnameError = null)
         }
     }
 
     private fun onLastnameChanged(lastname: String) {
         _uiState.update { state ->
-            state.copy(lastname = lastname)
+            state.copy(lastname = lastname, lastnameError = null)
         }
     }
 
     private fun onUsernameChanged(username: String) {
         _uiState.update { state ->
-            state.copy(username = username)
+            state.copy(username = username, usernameError = null)
         }
     }
 
     private fun onEmailChanged(email: String) {
         _uiState.update { state ->
-            state.copy(email = email)
+            state.copy(email = email, emailError = null)
         }
     }
 
     private fun onPasswordChanged(password: String) {
         _uiState.update { state ->
-            state.copy(password = password)
+            state.copy(password = password, passwordError = null)
         }
     }
 
     private fun onPasswordRepeatChanged(password: String) {
         _uiState.update { state ->
-            state.copy(passwordRepeat = password)
+            state.copy(passwordRepeat = password, passwordRepeatError = null)
         }
     }
 
-    private fun onImageUriChanged(imageUri: String) {
+    private fun onImageUriChanged(imageUri: Uri?) {
         _uiState.update { state ->
             state.copy(imageUri = imageUri)
         }
@@ -208,9 +209,18 @@ class RegisterScreenViewModel @Inject constructor(
 
     private fun validatePasswordRepeat() {
         _uiState.update { state ->
-            state.copy(passwordRepeatError = Validators.passwordRepeatValidator(state.passwordRepeat, state.passwordRepeat))
+            state.copy(
+                passwordRepeatError = Validators.passwordRepeatValidator(
+                    state.password,
+                    state.passwordRepeat
+                )
+            )
         }
     }
 
-    private fun onLoginBtnClicked() {}
+    private fun onLoginBtnClicked() {
+        viewModelScope.launch {
+            _uiEffect.emit(RegisterScreenEffect.NavigateToLoginScreen)
+        }
+    }
 }
