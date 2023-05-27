@@ -101,6 +101,9 @@ dependencies {
     // Firebase auth
     implementation 'com.google.firebase:firebase-auth-ktx'
 
+    // Firebase fire-store
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1"
 }
