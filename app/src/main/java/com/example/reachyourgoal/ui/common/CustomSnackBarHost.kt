@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.reachyourgoal.util.EMPTY_STRING
 
 @Composable
 fun CustomSnackBarHost(
@@ -43,7 +44,7 @@ fun CustomSnackBarHost(
                 TextButton(
                     onClick = { onActionBtnClick?.invoke() ?: data.dismiss() },
                     colors = buttonColor
-                ) { Text(data.visuals.actionLabel ?: "") }
+                ) { Text(data.visuals.actionLabel ?: EMPTY_STRING) }
             }
         ) {
             Text(data.visuals.message)

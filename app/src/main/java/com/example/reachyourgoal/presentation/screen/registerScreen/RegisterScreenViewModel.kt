@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -33,6 +34,8 @@ class RegisterScreenViewModel @Inject constructor(
             EMPTY_STRING,
             EMPTY_STRING,
             EMPTY_STRING,
+            EMPTY_STRING,
+            null,
             null,
             null,
             null,
@@ -55,9 +58,10 @@ class RegisterScreenViewModel @Inject constructor(
             is RegisterScreenEvent.OnUsernameChanged -> onUsernameChanged(event.username)
             is RegisterScreenEvent.OnEmailChanged -> onEmailChanged(event.email)
             is RegisterScreenEvent.OnPasswordChanged -> onPasswordChanged(event.password)
+            is RegisterScreenEvent.OnPasswordRepeatChanged -> onPasswordRepeatChanged(event.password)
             is RegisterScreenEvent.OnImageUriChanged -> onImageUriChanged(event.imageUri)
-            RegisterScreenEvent.RegisterBtnClicked -> onRegisterBtnClicked()
-            RegisterScreenEvent.LoginBtnClicked -> onLoginBtnClicked()
+            RegisterScreenEvent.OnRegisterBtnClicked -> onRegisterBtnClicked()
+            RegisterScreenEvent.OnLoginBtnClicked -> onLoginBtnClicked()
         }
     }
 
@@ -91,6 +95,12 @@ class RegisterScreenViewModel @Inject constructor(
         }
     }
 
+    private fun onPasswordRepeatChanged(password: String) {
+        _uiState.update { state ->
+            state.copy(passwordRepeat = password)
+        }
+    }
+
     private fun onImageUriChanged(imageUri: String) {
         _uiState.update { state ->
             state.copy(imageUri = imageUri)
@@ -99,11 +109,12 @@ class RegisterScreenViewModel @Inject constructor(
 
     private fun onRegisterBtnClicked() {
         _uiState.value.within {
-            validateFirstname(firstname)
-            validateLastname(lastname)
-            validateUsername(username)
-            validateEmail(email)
-            validatePassword(password)
+            validateFirstname()
+            validateLastname()
+            validateUsername()
+            validateEmail()
+            validatePassword()
+            validatePasswordRepeat()
         }
         _uiState.value.within {
             if (listOfNotNull(
@@ -111,7 +122,8 @@ class RegisterScreenViewModel @Inject constructor(
                     lastnameError,
                     usernameError,
                     emailError,
-                    passwordError
+                    passwordError,
+                    passwordRepeatError
                 ).isNotEmpty()
             ) {
                 return
@@ -160,36 +172,43 @@ class RegisterScreenViewModel @Inject constructor(
                         state.copy(isLoading = false)
                     }
                 }
+                .launchIn(this)
         }
     }
 
-    private fun validateFirstname(firstname: String) {
+    private fun validateFirstname() {
         _uiState.update { state ->
-            state.copy(firstnameError = Validators.nameValidator(firstname))
+            state.copy(firstnameError = Validators.nameValidator(state.firstname))
         }
     }
 
-    private fun validateLastname(lastname: String) {
+    private fun validateLastname() {
         _uiState.update { state ->
-            state.copy(lastnameError = Validators.nameValidator(lastname))
+            state.copy(lastnameError = Validators.nameValidator(state.lastname))
         }
     }
 
-    private fun validateUsername(username: String) {
+    private fun validateUsername() {
         _uiState.update { state ->
-            state.copy(usernameError = Validators.nameValidator(username))
+            state.copy(usernameError = Validators.nameValidator(state.username))
         }
     }
 
-    private fun validateEmail(email: String) {
+    private fun validateEmail() {
         _uiState.update { state ->
-            state.copy(emailError = Validators.emailValidator(email))
+            state.copy(emailError = Validators.emailValidator(state.email))
         }
     }
 
-    private fun validatePassword(password: String) {
+    private fun validatePassword() {
         _uiState.update { state ->
-            state.copy(passwordError = Validators.passwordValidator(password))
+            state.copy(passwordError = Validators.passwordValidator(state.password))
+        }
+    }
+
+    private fun validatePasswordRepeat() {
+        _uiState.update { state ->
+            state.copy(passwordRepeatError = Validators.passwordRepeatValidator(state.passwordRepeat, state.passwordRepeat))
         }
     }
 

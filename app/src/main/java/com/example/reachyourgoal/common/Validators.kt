@@ -7,14 +7,14 @@ object Validators {
         return if (Patterns.EMAIL_ADDRESS.matcher(email).matches())
             null
         else
-            "Email is not valid"
+            "Email is not valid."
     }
 
-    fun nameValidator(firstname: String): String? {
-        return if ("^[a-zA-Z]{2,}\$".toRegex().matches(firstname))
+    fun nameValidator(name: String): String? {
+        return if ("^[a-zA-Z]{2,}\$".toRegex().matches(name))
             null
         else
-            "First name must be at least 2 characters long and should only contain letters"
+            "Field must be at least 2 characters long and should only contain letters."
     }
 
     fun passwordValidator(password: String): String? {
@@ -22,5 +22,12 @@ object Validators {
             null
         else
             "Password must be at least 4 characters long and should not be blank."
+    }
+
+    fun passwordRepeatValidator(password: String, passwordRepeat: String): String? {
+        return if(password == passwordRepeat)
+            null
+        else
+            "Passwords must be same."
     }
 }

@@ -64,8 +64,8 @@ class LoginScreenViewModel @Inject constructor(
 
     private fun onLogin() {
         _uiState.value.within {
-            validateEmail(email)
-            validatePassword(password)
+            validateEmail()
+            validatePassword()
         }
         _uiState.value.within {
             if (listOfNotNull(
@@ -110,15 +110,15 @@ class LoginScreenViewModel @Inject constructor(
         }
     }
 
-    private fun validateEmail(email: String) {
+    private fun validateEmail() {
         _uiState.update { state ->
-            state.copy(emailError = Validators.emailValidator(email))
+            state.copy(emailError = Validators.emailValidator(state.email))
         }
     }
 
-    private fun validatePassword(password: String) {
+    private fun validatePassword() {
         _uiState.update { state ->
-            state.copy(passwordError = Validators.passwordValidator(password))
+            state.copy(passwordError = Validators.passwordValidator(state.password))
         }
     }
 

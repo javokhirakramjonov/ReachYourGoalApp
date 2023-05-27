@@ -7,10 +7,12 @@ data class RegisterScreenState(
     val username: String,
     val email: String,
     val password: String,
+    val passwordRepeat: String,
     val firstnameError: String?,
     val lastnameError: String?,
     val usernameError: String?,
     val emailError: String?,
     val passwordError: String?,
+    val passwordRepeatError: String?,
     val imageUri: String?
 )
