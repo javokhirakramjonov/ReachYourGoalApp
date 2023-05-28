@@ -63,6 +63,7 @@ class RegisterScreenViewModel @Inject constructor(
             is RegisterScreenEvent.OnImageUriChanged -> onImageUriChanged(event.imageUri)
             RegisterScreenEvent.OnRegisterBtnClicked -> onRegisterBtnClicked()
             RegisterScreenEvent.OnLoginBtnClicked -> onLoginBtnClicked()
+            RegisterScreenEvent.OnPhotoPickerBtnClicked -> onPhotoPickerBtnClicked()
         }
     }
 
@@ -109,14 +110,12 @@ class RegisterScreenViewModel @Inject constructor(
     }
 
     private fun onRegisterBtnClicked() {
-        _uiState.value.within {
-            validateFirstname()
-            validateLastname()
-            validateUsername()
-            validateEmail()
-            validatePassword()
-            validatePasswordRepeat()
-        }
+        validateFirstname()
+        validateLastname()
+        validateUsername()
+        validateEmail()
+        validatePassword()
+        validatePasswordRepeat()
         _uiState.value.within {
             if (listOfNotNull(
                     firstnameError,
@@ -179,19 +178,19 @@ class RegisterScreenViewModel @Inject constructor(
 
     private fun validateFirstname() {
         _uiState.update { state ->
-            state.copy(firstnameError = Validators.nameValidator(state.firstname))
+            state.copy(firstnameError = Validators.firstAndLastnameValidator(state.firstname))
         }
     }
 
     private fun validateLastname() {
         _uiState.update { state ->
-            state.copy(lastnameError = Validators.nameValidator(state.lastname))
+            state.copy(lastnameError = Validators.firstAndLastnameValidator(state.lastname))
         }
     }
 
     private fun validateUsername() {
         _uiState.update { state ->
-            state.copy(usernameError = Validators.nameValidator(state.username))
+            state.copy(usernameError = Validators.userNameValidator(state.username))
         }
     }
 
@@ -221,6 +220,12 @@ class RegisterScreenViewModel @Inject constructor(
     private fun onLoginBtnClicked() {
         viewModelScope.launch {
             _uiEffect.emit(RegisterScreenEffect.NavigateToLoginScreen)
+        }
+    }
+
+    private fun onPhotoPickerBtnClicked() {
+        viewModelScope.launch {
+            _uiEffect.emit(RegisterScreenEffect.ShowPhotoPicker)
         }
     }
 }

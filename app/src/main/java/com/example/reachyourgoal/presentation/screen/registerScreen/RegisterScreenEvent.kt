@@ -10,6 +10,7 @@ sealed class RegisterScreenEvent {
     data class OnPasswordChanged(val password: String) : RegisterScreenEvent()
     data class OnPasswordRepeatChanged(val password: String) : RegisterScreenEvent()
     data class OnImageUriChanged(val imageUri: Uri?) : RegisterScreenEvent()
+    object OnPhotoPickerBtnClicked: RegisterScreenEvent()
     object OnRegisterBtnClicked : RegisterScreenEvent()
     object OnLoginBtnClicked : RegisterScreenEvent()
 }

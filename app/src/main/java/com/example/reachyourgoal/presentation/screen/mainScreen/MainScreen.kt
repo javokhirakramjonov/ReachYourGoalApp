@@ -16,9 +16,7 @@ fun MainScreen(navHostController: NavHostController) {
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("Welcome ${++x}")
+            Text("Welcome")
         }
     }
 }
-
-var x = 0

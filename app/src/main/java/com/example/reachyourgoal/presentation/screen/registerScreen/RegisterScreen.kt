@@ -5,7 +5,6 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,6 +63,11 @@ fun RegisterScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
+    val pickMedia =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) { uri ->
+            viewModel.onEvent(RegisterScreenEvent.OnImageUriChanged(uri))
+        }
+
     LaunchedEffect(true) {
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
@@ -86,6 +90,10 @@ fun RegisterScreen(
                         SnackBarStyles.ErrorSnackBar(effect.errorMessage)
                     )
                 }
+
+                RegisterScreenEffect.ShowPhotoPicker -> {
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
             }
         }
     }
@@ -100,18 +108,12 @@ fun RegisterScreen(
 
     val scrollState = rememberScrollState()
 
-    val pickMedia =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia()) { uri ->
-            viewModel.onEvent(RegisterScreenEvent.OnImageUriChanged(uri))
-        }
-
     Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) {
         Surface(modifier = Modifier.padding(it)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState),
-                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AsyncImage(
@@ -120,7 +122,7 @@ fun RegisterScreen(
                         .padding(20.dp)
                         .clip(CircleShape)
                         .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                        .clickable { pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                        .clickable { viewModel.onEvent(RegisterScreenEvent.OnPhotoPickerBtnClicked) },
                     model = uiState.imageUri,
                     contentDescription = "user image",
                     contentScale = ContentScale.Crop,
