@@ -1,5 +1,7 @@
 package com.example.reachyourgoal.presentation.screen.createTaskScreen
 
+import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
@@ -26,18 +28,19 @@ class CreateTaskScreenViewModel @Inject constructor() :
             EMPTY_STRING,
             EMPTY_STRING,
             listOf(
-                File("Hello 1"),
-                File("Hello 2"),
-                File("Hello 3"),
-                File("Hello 4"),
-                File("Hello 5"),
-                File("Hello 6"),
+                File("Hello 1").toUri(),
+                File("Hello 2").toUri(),
+                File("Hello 3").toUri(),
+                File("Hello 4").toUri(),
+                File("Hello 5").toUri(),
+                File("Hello 6").toUri(),
             ),
             null,
             null,
             null,
             null,
             null,
+            false,
             false,
             false,
             false
@@ -54,8 +57,8 @@ class CreateTaskScreenViewModel @Inject constructor() :
         when (event) {
             is CreateTaskScreenEvent.OnTaskNameChanged -> onTaskNameChanged(event.taskName)
             is CreateTaskScreenEvent.OnTaskDescriptionChanged -> onTaskDescriptionChanged(event.taskDescription)
-            is CreateTaskScreenEvent.OnFileAdded -> onFileAdded(event.file)
-            is CreateTaskScreenEvent.OnFileDeleted -> onFileDeleted(event.file)
+            is CreateTaskScreenEvent.OnFilesAdded -> onFilesAdded(event.fileUris)
+            is CreateTaskScreenEvent.OnFileDeleted -> onFileDeleted(event.fileUri)
             is CreateTaskScreenEvent.OnRemainderTimeChanged -> onRemainderTimeChanged(event.remainderTime)
             is CreateTaskScreenEvent.OnTaskEndTimeChanged -> onTaskEndTimeChanged(event.taskEndTime)
             is CreateTaskScreenEvent.OnTaskStartTimeChanged -> onTaskStartTimeChanged(event.taskStartTime)
@@ -81,37 +84,39 @@ class CreateTaskScreenViewModel @Inject constructor() :
         }
     }
 
-    private fun onFileAdded(file: File) {
+    private fun onFilesAdded(selectedFileUris: List<Uri>?) {
         _uiState.update { state ->
-            val files = state.files.toMutableList()
-            files.add(file)
-            state.copy(files = files)
+            val fileUris = state.fileUris.toMutableList()
+            selectedFileUris?.let {
+                fileUris.addAll(0, it)
+            }
+            state.copy(fileUris = fileUris, isFilesBeingSelected = false)
         }
     }
 
-    private fun onFileDeleted(file: File) {
+    private fun onFileDeleted(fileUri: Uri) {
         _uiState.update { state ->
-            val files = state.files.toMutableList()
-            files.remove(file)
-            state.copy(files = files)
+            val fileUris = state.fileUris.toMutableList()
+            fileUris.remove(fileUri)
+            state.copy(fileUris = fileUris)
         }
     }
 
     private fun onRemainderTimeChanged(remainderTime: Calendar?) {
         _uiState.update { state ->
-            state.copy(remainderTime = remainderTime, remainderTimeSelecting = false)
+            state.copy(remainderTime = remainderTime, isRemainderTimeBeingSelected = false)
         }
     }
 
     private fun onTaskEndTimeChanged(taskEndTime: Calendar?) {
         _uiState.update { state ->
-            state.copy(endTime = taskEndTime, endTimeSelecting = false)
+            state.copy(endTime = taskEndTime, isEndTimeBeingSelected = false)
         }
     }
 
     private fun onTaskStartTimeChanged(taskStartTime: Calendar?) {
         _uiState.update { state ->
-            state.copy(startTime = taskStartTime, startTimeSelecting = false)
+            state.copy(startTime = taskStartTime, isStartTimeBeingSelected = false)
         }
     }
 
@@ -151,31 +156,31 @@ class CreateTaskScreenViewModel @Inject constructor() :
 
     private fun onUpdateRemainderTimeBtnClicked() {
         _uiState.update { state ->
-            state.copy(remainderTimeSelecting = true)
+            state.copy(isRemainderTimeBeingSelected = true)
         }
     }
 
     private fun onUpdateTaskStartTimeBtnClicked() {
         _uiState.update { state ->
-            state.copy(startTimeSelecting = true)
+            state.copy(isStartTimeBeingSelected = true)
         }
     }
 
     private fun onUpdateTaskEndTimeBtnClicked() {
         _uiState.update { state ->
-            state.copy(endTimeSelecting = true)
+            state.copy(isEndTimeBeingSelected = true)
         }
     }
 
     private fun onDeleteAllFilesBtnClicked() {
         _uiState.update { state ->
-            state.copy(files = emptyList())
+            state.copy(fileUris = emptyList())
         }
     }
 
     private fun onAddFileBtnClicked() {
-        viewModelScope.launch {
-            _uiEffect.emit(CreateTaskScreenEffect.ShowFilePicker)
+        _uiState.update { state ->
+            state.copy(isFilesBeingSelected = true)
         }
     }
 }

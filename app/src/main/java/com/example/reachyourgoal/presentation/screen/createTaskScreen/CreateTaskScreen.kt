@@ -1,5 +1,7 @@
 package com.example.reachyourgoal.presentation.screen.createTaskScreen
 
+import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -47,10 +50,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
+import com.example.reachyourgoal.ui.common.FilePicker
 import com.example.reachyourgoal.ui.common.ShowLoading
 import com.example.reachyourgoal.ui.common.SnackBarStyles
 import com.example.reachyourgoal.util.within
@@ -77,7 +82,6 @@ fun CreateTaskScreen(
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
                 CreateTaskScreenEffect.CloseScreen -> navHostController.popBackStack()
-                CreateTaskScreenEffect.ShowFilePicker -> TODO()
                 is CreateTaskScreenEffect.ShowErrorMessage -> snackBarHostState.showSnackbar(
                     SnackBarStyles.ErrorSnackBar(effect.message)
                 )
@@ -141,33 +145,43 @@ fun CreateTaskScreen(
                     modifier = modifierForColumnElements,
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    Button(modifier = Modifier.weight(0.4f),
+                    Button(modifier = Modifier.weight(1f),
                         onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnCloseBtnClicked) }) {
                         Text("Cancel")
                     }
-                    Spacer(modifier = Modifier.weight(0.2f))
-                    Button(modifier = Modifier.weight(0.4f),
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Button(modifier = Modifier.weight(1f),
                         onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnCreateTaskBtnClicked) }) {
                         Text("Create task")
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
             }
             if (uiState.isLoading) {
                 ShowLoading()
             }
-            if (uiState.remainderTimeSelecting) {
+
+            if (uiState.isRemainderTimeBeingSelected) {
                 ShowClockDialog { time ->
                     viewModel.onEvent(CreateTaskScreenEvent.OnRemainderTimeChanged(time))
                 }
             }
-            if (uiState.startTimeSelecting) {
+
+            if (uiState.isStartTimeBeingSelected) {
                 ShowClockDialog { time ->
                     viewModel.onEvent(CreateTaskScreenEvent.OnTaskStartTimeChanged(time))
                 }
             }
-            if (uiState.endTimeSelecting) {
+
+            if (uiState.isEndTimeBeingSelected) {
                 ShowClockDialog { time ->
                     viewModel.onEvent(CreateTaskScreenEvent.OnTaskEndTimeChanged(time))
+                }
+            }
+
+            if (uiState.isFilesBeingSelected) {
+                FilePicker { fileUris ->
+                    viewModel.onEvent(CreateTaskScreenEvent.OnFilesAdded(fileUris))
                 }
             }
         }
@@ -196,7 +210,8 @@ fun ShowClockDialog(
 private fun TaskNameInput(
     modifier: Modifier, viewModel: CreateTaskScreenViewModel, uiState: CreateTaskScreenState
 ) {
-    OutlinedTextField(modifier = modifier,
+    OutlinedTextField(
+        modifier = modifier,
         value = uiState.taskName,
         onValueChange = { newValue ->
             viewModel.onEvent(CreateTaskScreenEvent.OnTaskNameChanged(newValue))
@@ -216,7 +231,8 @@ private fun TaskNameInput(
 private fun TaskDescriptionInput(
     modifier: Modifier, viewModel: CreateTaskScreenViewModel, uiState: CreateTaskScreenState
 ) {
-    OutlinedTextField(modifier = modifier,
+    OutlinedTextField(
+        modifier = modifier,
         value = uiState.taskDescription,
         onValueChange = { newValue ->
             viewModel.onEvent(CreateTaskScreenEvent.OnTaskDescriptionChanged(newValue))
@@ -323,11 +339,16 @@ private fun TaskTimeRange(
             Row(
                 modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround
             ) {
-                Button(modifier = Modifier,
+                Button(
+                    modifier = Modifier
+                        .weight(1f),
                     onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnUpdateTaskStartTimeBtnClicked) }) {
                     Text("change start time")
                 }
-                Button(modifier = Modifier,
+                Spacer(modifier = Modifier.width(20.dp))
+                Button(
+                    modifier = Modifier
+                        .weight(1f),
                     onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnUpdateTaskEndTimeBtnClicked) }) {
                     Text("change end time")
                 }
@@ -349,19 +370,19 @@ private fun SelectedFiles(
     ) {
         Text("Necessary files")
         Spacer(modifier = Modifier.height(12.dp))
-        ShowFiles(uiState.files) { fileToDelete ->
+        ShowFiles(uiState.fileUris) { fileToDelete ->
             viewModel.onEvent(CreateTaskScreenEvent.OnFileDeleted(fileToDelete))
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround
         ) {
-            Button(modifier = Modifier.weight(0.4f),
+            Button(modifier = Modifier.weight(1f),
                 onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnDeleteAllFilesBtnClicked) }) {
                 Text("Delete All")
             }
-            Spacer(modifier = Modifier.weight(0.2f))
-            Button(modifier = Modifier.weight(0.4f),
+            Spacer(modifier = Modifier.width(20.dp))
+            Button(modifier = Modifier.weight(1f),
                 onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnAddFileBtnClicked) }) {
                 Text("Add file")
             }
@@ -369,20 +390,27 @@ private fun SelectedFiles(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ShowFiles(
-    fileList: List<File>, onDelete: (File) -> Unit
+    fileUris: List<Uri>, onDelete: (Uri) -> Unit
 ) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        items(fileList) {
-            FileElement(it, onDelete)
+        items(fileUris) {
+            FileElement(
+                Modifier.animateItemPlacement(),
+                it,
+                onDelete
+            )
         }
     }
 }
 
 @Composable
 private fun FileElement(
-    file: File, onDelete: (File) -> Unit
+    modifier: Modifier = Modifier,
+    fileUri: Uri,
+    onDelete: (Uri) -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -398,7 +426,7 @@ private fun FileElement(
                 .align(Alignment.TopEnd), contentAlignment = Alignment.Center
         ) {
             IconButton(onClick = {
-                onDelete(file)
+                onDelete(fileUri)
             }) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -428,7 +456,7 @@ private fun FileElement(
                     .fillMaxWidth(), contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = file.path,
+                    text = fileUri.path ?: "Unknown",
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
@@ -441,5 +469,5 @@ private fun FileElement(
 @Preview
 @Composable
 private fun FileElementPreview() {
-    FileElement(file = File("Hello"), onDelete = {})
+    FileElement(fileUri = File("Hello").toUri(), onDelete = {})
 }

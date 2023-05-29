@@ -45,21 +45,22 @@ class AuthRepositoryImpl @Inject constructor(
             auth.createUserWithEmailAndPassword(user.email, user.password).await()
         }
         resultEmailAndPassword.fold(
-            {},
             {
-                emit(Result.failure(it))
-                return@flow
-            }
-        )
-        val resultUserData = runCatching {
-            firestore.collection("users").document(user.email).set(user).await()
-        }
-        resultUserData.fold(
-            {
-                emit(Result.success(auth.currentUser))
+                val resultUserData = runCatching {
+                    firestore.collection("users").document(user.email).set(user).await()
+                }
+                resultUserData.fold(
+                    {
+                        emit(Result.success(auth.currentUser))
+                    },
+                    {
+                        emit(Result.failure(it))
+                    }
+                )
             },
             {
                 emit(Result.failure(it))
+                return@flow
             }
         )
     }
