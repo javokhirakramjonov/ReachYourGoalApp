@@ -1,6 +1,7 @@
 package com.example.reachyourgoal.domain.model
 
 import android.net.Uri
+
 data class UserModel(
     val firstname: String,
     val lastname: String,

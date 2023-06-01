@@ -66,8 +66,8 @@ object Validators {
             }
     }
 
-    fun taskNameValidator(taskName: String) : String? {
-        return if("^[a-zA-Z0-9][a-zA-Z0-9\\s]{3,49}$".toRegex().matches(taskName))
+    fun taskNameValidator(taskName: String): String? {
+        return if ("^[a-zA-Z0-9][a-zA-Z0-9\\s]{3,49}$".toRegex().matches(taskName))
             null
         else
             listOf(
@@ -81,7 +81,7 @@ object Validators {
     }
 
     fun taskDescriptionValidator(taskDescription: String): String? {
-        return if("^.{0,250}$".toRegex().matches(taskDescription))
+        return if ("^.{0,250}$".toRegex().matches(taskDescription))
             null
         else
             listOf(

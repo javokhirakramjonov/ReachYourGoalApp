@@ -1,25 +1,31 @@
 package com.example.reachyourgoal.presentation.screen.createTaskScreen
 
 import android.net.Uri
-import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
+import com.example.reachyourgoal.domain.model.TaskModel
+import com.example.reachyourgoal.domain.repository.TaskRepository
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.io.File
 import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
-class CreateTaskScreenViewModel @Inject constructor() :
+class CreateTaskScreenViewModel @Inject constructor(
+    private val taskRepository: TaskRepository
+) :
     BaseViewModel<CreateTaskScreenState, CreateTaskScreenEvent, CreateTaskScreenEffect>() {
 
     private val _uiState = MutableStateFlow(
@@ -27,14 +33,7 @@ class CreateTaskScreenViewModel @Inject constructor() :
             false,
             EMPTY_STRING,
             EMPTY_STRING,
-            listOf(
-                File("Hello 1").toUri(),
-                File("Hello 2").toUri(),
-                File("Hello 3").toUri(),
-                File("Hello 4").toUri(),
-                File("Hello 5").toUri(),
-                File("Hello 6").toUri(),
-            ),
+            emptyList(),
             null,
             null,
             null,
@@ -139,7 +138,32 @@ class CreateTaskScreenViewModel @Inject constructor() :
                 return
             }
         }
-        //TODO()
+        viewModelScope.launch(Dispatchers.IO) {
+            val task = TaskModel(
+                _uiState.value.taskName,
+                _uiState.value.taskDescription,
+                _uiState.value.fileUris,
+                _uiState.value.remainderTime,
+                _uiState.value.startTime,
+                _uiState.value.endTime
+            )
+            taskRepository
+                .createTask(task)
+                .onStart {
+                    _uiState.update { state ->
+                        state.copy(isLoading = true)
+                    }
+                }
+                .onCompletion {
+                    _uiState.update { state ->
+                        state.copy(isLoading = false)
+                    }
+                    if (it != null) {
+                        _uiEffect.emit(CreateTaskScreenEffect.ShowErrorMessage(it.message.toString()))
+                    }
+                }
+                .launchIn(this)
+        }
     }
 
     private fun validateTaskName() {

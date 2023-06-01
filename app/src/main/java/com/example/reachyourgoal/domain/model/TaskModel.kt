@@ -1,12 +1,13 @@
 package com.example.reachyourgoal.domain.model
 
-import java.io.File
+import android.net.Uri
 import java.util.Calendar
 
 data class TaskModel(
     val name: String,
     val description: String?,
-    val files: List<File>?,
+    val fileUris: List<Uri>?,
     val remainderTime: Calendar?,
-    val taskTimeRange: List<Calendar>?
+    val taskStartTime: Calendar?,
+    val taskEndTime: Calendar?
 )
