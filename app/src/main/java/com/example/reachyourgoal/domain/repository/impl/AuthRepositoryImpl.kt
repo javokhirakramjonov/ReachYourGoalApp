@@ -1,10 +1,10 @@
 package com.example.reachyourgoal.domain.repository.impl
 
-import com.example.reachyourgoal.domain.model.UserModel
+import com.example.reachyourgoal.domain.model.local.UserModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.service.NetworkStatusService
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
-import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -18,50 +18,30 @@ class AuthRepositoryImpl @Inject constructor(
     private val auth = Firebase.auth
     private val firestore = Firebase.firestore
 
-    override fun login(email: String, password: String) = flow<Result<FirebaseUser?>> {
+    companion object {
+        const val COLLECTION_USER = "users"
+    }
+
+    override fun login(email: String, password: String) = flow<Result<AuthResult>> {
         if (!networkStatusService.isInternetAvailable()) {
-            emit(Result.failure(Error(INTERNET_IS_NOT_AVAILABLE)))
-            return@flow
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
         val result = runCatching {
             auth.signInWithEmailAndPassword(email, password).await()
         }
-        result.fold(
-            {
-                emit(Result.success(auth.currentUser))
-            },
-            { error ->
-                emit(Result.failure(error))
-            }
-        )
+        emit(result)
     }
 
-    override fun register(user: UserModel) = flow<Result<FirebaseUser?>> {
+    override fun register(user: UserModel) = flow<Result<AuthResult>> {
         if (!networkStatusService.isInternetAvailable()) {
-            emit(Result.failure(Error(INTERNET_IS_NOT_AVAILABLE)))
-            return@flow
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
         val resultEmailAndPassword = runCatching {
             auth.createUserWithEmailAndPassword(user.email, user.password).await()
         }
-        resultEmailAndPassword.fold(
-            {
-                val resultUserData = runCatching {
-                    firestore.collection("users").document(user.email).set(user).await()
-                }
-                resultUserData.fold(
-                    {
-                        emit(Result.success(auth.currentUser))
-                    },
-                    {
-                        emit(Result.failure(it))
-                    }
-                )
-            },
-            {
-                emit(Result.failure(it))
-                return@flow
-            }
-        )
+        val resultUserData = runCatching {
+            firestore.collection(COLLECTION_USER).document(user.email).set(user).await()
+        }
+        emit(resultEmailAndPassword)
     }
 }

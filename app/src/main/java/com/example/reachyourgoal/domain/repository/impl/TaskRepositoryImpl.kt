@@ -2,29 +2,28 @@ package com.example.reachyourgoal.domain.repository.impl
 
 import android.content.Context
 import android.content.Intent
-import com.example.reachyourgoal.domain.model.FileUploadModel
-import com.example.reachyourgoal.domain.model.FileUploadState
-import com.example.reachyourgoal.domain.model.TaskModel
+import com.example.reachyourgoal.data.dao.TaskDao
+import com.example.reachyourgoal.domain.model.local.FileUploadModel
+import com.example.reachyourgoal.domain.model.local.FileUploadState
+import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.repository.TaskRepository
 import com.example.reachyourgoal.service.FirebaseFileUploadService
 import com.example.reachyourgoal.service.FirebaseFileUploadService.Companion.NOTIFICATION_ID
 import com.example.reachyourgoal.service.FirebaseFileUploadService.Companion.STATE
 import com.example.reachyourgoal.service.NetworkStatusService
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val taskDao: TaskDao,
     private val networkStatusService: NetworkStatusService
 ) : TaskRepository {
 
@@ -38,19 +37,12 @@ class TaskRepositoryImpl @Inject constructor(
         private const val FILE_DIR = "task_files"
     }
 
-    override fun createTask(task: TaskModel): Flow<Result<TaskModel>> = flow {
+    override fun createTask(task: TaskModel) = flow<Unit> {
         if (!networkStatusService.isInternetAvailable()) {
-            emit(Result.failure(Error(INTERNET_IS_NOT_AVAILABLE)))
-            return@flow
-        }
-        val x = kotlin.runCatching {
-            Firebase.auth.signInWithEmailAndPassword(
-                "javokhirakromjonov@gmail.com",
-                "javokhirakromjonov@gmail.com"
-            ).await()
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
 
-        task.fileUris?.let { uris ->
+        task.fileUris.let { uris ->
             uris.forEach { uri ->
                 val fileUploadModel = FileUploadModel(
                     uri,

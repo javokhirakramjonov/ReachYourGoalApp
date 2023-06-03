@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.domain.model
+package com.example.reachyourgoal.domain.model.local
 
 enum class FileUploadState {
     NOT_STARTED,

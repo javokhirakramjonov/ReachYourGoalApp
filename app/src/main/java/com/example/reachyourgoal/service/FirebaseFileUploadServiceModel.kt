@@ -1,7 +1,7 @@
 package com.example.reachyourgoal.service
 
-import com.example.reachyourgoal.domain.model.FileUploadModel
-import com.example.reachyourgoal.domain.model.FileUploadState
+import com.example.reachyourgoal.domain.model.local.FileUploadModel
+import com.example.reachyourgoal.domain.model.local.FileUploadState
 import com.example.reachyourgoal.domain.repository.TaskRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,8 +9,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,12 +24,12 @@ class FirebaseFileUploadServiceModel @Inject constructor(
     fun startFileUpload(notificationId: Int) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
-            repository.startUploadFile(notificationId).onEach {
+            repository.startUploadFile(notificationId).collect {
                 if (it.state == FileUploadState.FINISHED) {
                     delay(200)
                 }
                 _uploadState.emit(it)
-            }.launchIn(this)
+            }
         }
     }
 

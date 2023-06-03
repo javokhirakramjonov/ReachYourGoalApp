@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
-import com.example.reachyourgoal.domain.model.UserModel
+import com.example.reachyourgoal.domain.model.local.UserModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within

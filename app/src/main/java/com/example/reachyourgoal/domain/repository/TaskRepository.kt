@@ -1,12 +1,12 @@
 package com.example.reachyourgoal.domain.repository
 
-import com.example.reachyourgoal.domain.model.FileUploadModel
-import com.example.reachyourgoal.domain.model.TaskModel
+import com.example.reachyourgoal.domain.model.local.FileUploadModel
+import com.example.reachyourgoal.domain.model.local.TaskModel
 import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
 
-    fun createTask(task: TaskModel): Flow<Result<TaskModel>>
+    fun createTask(task: TaskModel): Flow<Unit>
 
     fun startUploadFile(notificationId: Int): Flow<FileUploadModel>
 

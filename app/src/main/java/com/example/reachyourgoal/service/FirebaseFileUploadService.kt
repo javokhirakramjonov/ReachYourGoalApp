@@ -10,8 +10,8 @@ import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.reachyourgoal.R
-import com.example.reachyourgoal.domain.model.FileUploadModel
-import com.example.reachyourgoal.domain.model.FileUploadState
+import com.example.reachyourgoal.domain.model.local.FileUploadModel
+import com.example.reachyourgoal.domain.model.local.FileUploadState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

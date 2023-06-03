@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.domain.model
+package com.example.reachyourgoal.domain.model.local
 
 import android.net.Uri
 import java.io.Serializable
