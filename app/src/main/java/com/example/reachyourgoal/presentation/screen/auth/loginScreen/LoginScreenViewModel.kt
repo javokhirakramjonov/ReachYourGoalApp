@@ -1,9 +1,11 @@
-package com.example.reachyourgoal.presentation.screen.loginScreen
+package com.example.reachyourgoal.presentation.screen.auth.loginScreen
 
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
 import com.example.reachyourgoal.domain.repository.AuthRepository
+import com.example.reachyourgoal.domain.repository.result.LoginResult
+import com.example.reachyourgoal.presentation.screen.auth.registerScreen.RegisterScreenEffect
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -46,7 +49,7 @@ class LoginScreenViewModel @Inject constructor(
             is LoginScreenEvent.OnEmailChanged -> onEmailChanged(event.email)
             is LoginScreenEvent.OnPasswordChanged -> onPasswordChanged(event.password)
             LoginScreenEvent.OnLoginBtnClicked -> onLogin()
-            LoginScreenEvent.OnRegisterBtnClicked -> onCreateAccount()
+            LoginScreenEvent.OnRegisterBtnClicked -> onCreateAccountBtnClicked()
         }
     }
 
@@ -63,9 +66,10 @@ class LoginScreenViewModel @Inject constructor(
     }
 
     private fun onLogin() {
-        _uiState.value.within {
-            validateEmail()
-            validatePassword()
+        val (email, password) = with(_uiState.value) {
+            val email = validateEmail(email)
+            val password = validatePassword(password)
+            Pair(email, password)
         }
         _uiState.value.within {
             if (listOfNotNull(
@@ -77,8 +81,6 @@ class LoginScreenViewModel @Inject constructor(
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
-            val email = _uiState.value.email
-            val password = _uiState.value.password
             authRepository
                 .login(email, password)
                 .onStart {
@@ -86,17 +88,25 @@ class LoginScreenViewModel @Inject constructor(
                         state.copy(isLoading = true)
                     }
                 }
-                .onEach { data ->
-                    data.fold(
-                        {
+                .onEach { result ->
+                    when (result) {
+                        LoginResult.Success -> {
                             _uiEffect.emit(LoginScreenEffect.NavigateToMainScreen)
-                        },
-                        { error ->
-                            error.message?.let {
-                                _uiEffect.emit(LoginScreenEffect.ShowErrorMessage(it))
-                            }
                         }
-                    )
+
+                        LoginResult.UserDetailsRequired -> {
+                            _uiEffect.emit(LoginScreenEffect.NavigateToUserDetailsScreen)
+                        }
+
+                        is LoginResult.Error -> {
+                            _uiEffect.emit(LoginScreenEffect.ShowErrorMessage(result.message))
+                        }
+                    }
+                }
+                .catch { error ->
+                    error.message?.let { errorMessage ->
+                        _uiEffect.emit(LoginScreenEffect.ShowErrorMessage(errorMessage))
+                    }
                 }
                 .onCompletion { error ->
                     error?.message?.let { errorMessage ->
@@ -110,19 +120,21 @@ class LoginScreenViewModel @Inject constructor(
         }
     }
 
-    private fun validateEmail() {
+    private fun validateEmail(email: String): String {
         _uiState.update { state ->
-            state.copy(emailError = Validators.emailValidator(state.email))
+            state.copy(emailError = Validators.emailValidator(email))
         }
+        return email
     }
 
-    private fun validatePassword() {
+    private fun validatePassword(password: String): String {
         _uiState.update { state ->
-            state.copy(passwordError = Validators.passwordValidator(state.password))
+            state.copy(passwordError = Validators.passwordValidator(password))
         }
+        return password
     }
 
-    private fun onCreateAccount() {
+    private fun onCreateAccountBtnClicked() {
         viewModelScope.launch {
             _uiEffect.emit(LoginScreenEffect.NavigateToRegisterScreen)
         }
