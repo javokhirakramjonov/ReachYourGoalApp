@@ -29,6 +29,13 @@ fun CustomSnackBarHost(
                 )
             }
 
+            is SnackBarStyles.SuccessSnackBar -> {
+                ButtonDefaults.textButtonColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = Color.Green
+                )
+            }
+
             else -> {
                 ButtonDefaults.textButtonColors(
                     contentColor = MaterialTheme.colorScheme.inversePrimary

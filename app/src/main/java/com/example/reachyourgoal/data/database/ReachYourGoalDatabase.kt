@@ -6,8 +6,10 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.reachyourgoal.data.converters.TaskFileListConverter
+import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
+import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 
-@Database(entities = [], version = 1)
+@Database(entities = [TaskEntity::class, TaskFileEntity::class], version = 1)
 @TypeConverters(TaskFileListConverter::class)
 abstract class ReachYourGoalDatabase : RoomDatabase() {
 

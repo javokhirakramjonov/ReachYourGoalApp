@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.presentation.screen.loginScreen
+package com.example.reachyourgoal.presentation.screen.auth.loginScreen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -57,6 +57,12 @@ fun LoginScreen(
                     )
                 }
 
+                is LoginScreenEffect.ShowSuccessMessage -> {
+                    snackBarHostState.showSnackbar(
+                        SnackBarStyles.SuccessSnackBar(effect.successMessage)
+                    )
+                }
+
                 LoginScreenEffect.NavigateToMainScreen -> {
                     navHostController.navigateWithPopUp(
                         Screen.MainScreen.route,
@@ -69,6 +75,10 @@ fun LoginScreen(
                         Screen.RegisterScreen.route,
                         Screen.LoginScreen.route
                     )
+                }
+
+                LoginScreenEffect.NavigateToUserDetailsScreen -> {
+                    navHostController.navigate(Screen.UserDetailsScreen.route)
                 }
             }
         }

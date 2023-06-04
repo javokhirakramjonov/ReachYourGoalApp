@@ -23,7 +23,6 @@ import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val taskDao: TaskDao,
     private val networkStatusService: NetworkStatusService
 ) : TaskRepository {
 

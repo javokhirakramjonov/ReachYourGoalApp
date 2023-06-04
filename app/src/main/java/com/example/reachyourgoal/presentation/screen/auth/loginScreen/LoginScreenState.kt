@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.presentation.screen.loginScreen
+package com.example.reachyourgoal.presentation.screen.auth.loginScreen
 
 data class LoginScreenState(
     val isLoading: Boolean,

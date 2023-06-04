@@ -2,12 +2,14 @@ package com.example.reachyourgoal.domain.repository.impl
 
 import com.example.reachyourgoal.domain.model.local.UserModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
+import com.example.reachyourgoal.domain.repository.result.LoginResult
 import com.example.reachyourgoal.service.NetworkStatusService
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
-import com.google.firebase.auth.AuthResult
+import com.example.reachyourgoal.util.SOMETHING_WENT_WRONG
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -17,31 +19,73 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
     private val auth = Firebase.auth
     private val firestore = Firebase.firestore
+    private val firebaseStorage = Firebase.storage.reference
 
     companion object {
         const val COLLECTION_USER = "users"
     }
 
-    override fun login(email: String, password: String) = flow<Result<AuthResult>> {
+    override fun login(email: String, password: String) = flow {
         if (!networkStatusService.isInternetAvailable()) {
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
-        val result = runCatching {
+        runCatching {
             auth.signInWithEmailAndPassword(email, password).await()
+        }.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
         }
-        emit(result)
+        val userDetailsResult = runCatching {
+            firestore.collection(COLLECTION_USER).document(email).get().await()
+        }.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
+        }
+        if (userDetailsResult.exists()) {
+            emit(LoginResult.Success)
+        } else {
+            emit(LoginResult.UserDetailsRequired)
+        }
+
     }
 
-    override fun register(user: UserModel) = flow<Result<AuthResult>> {
+    override fun register(email: String, password: String) = flow {
         if (!networkStatusService.isInternetAvailable()) {
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
-        val resultEmailAndPassword = runCatching {
-            auth.createUserWithEmailAndPassword(user.email, user.password).await()
+        runCatching {
+            auth.createUserWithEmailAndPassword(email, password).await()
+        }.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
         }
-        val resultUserData = runCatching {
-            firestore.collection(COLLECTION_USER).document(user.email).set(user).await()
+        emit(Result.success(Unit))
+    }
+
+    override fun saveUserDetails(userModel: UserModel) = flow {
+        if (!networkStatusService.isInternetAvailable()) {
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
-        emit(resultEmailAndPassword)
+        //Always coming here after sign in
+        val email = auth.currentUser!!.email!!
+
+        val imageUrl = userModel.imageUri?.runCatching {
+            firebaseStorage.child(email).putFile(this).await()
+        }?.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
+        }?.runCatching {
+            storage.downloadUrl.await()
+        }?.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
+        }
+
+        runCatching {
+            firestore.collection(COLLECTION_USER).document(email)
+                .set(userModel.copy(imageUri = imageUrl)).await()
+        }.getOrElse {
+            throw (Throwable(getErrorMessageOrDefault(it)))
+        }
+        emit(Result.success(Unit))
+    }
+
+    private fun getErrorMessageOrDefault(throwable: Throwable?): String {
+        return throwable?.message ?: SOMETHING_WENT_WRONG
     }
 }
