@@ -11,4 +11,6 @@ data class TaskEntity(
     val id: Long = 0,
     val name: String,
     val description: String,
+    @ColumnInfo(name = "is_uploaded_to_server")
+    val isUploadedToServer : Boolean
 )

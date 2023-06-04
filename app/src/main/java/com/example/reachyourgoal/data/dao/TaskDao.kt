@@ -15,16 +15,19 @@ import kotlinx.coroutines.flow.Flow
 interface TaskDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addTask(task: TaskEntity)
+    suspend fun addTask(task: TaskEntity): TaskEntity
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addTaskFile(taskFile: TaskFileEntity)
+    suspend fun addTaskFile(taskFile: TaskFileEntity): TaskFileEntity
 
     @Update
-    suspend fun updateTask(task: TaskEntity)
+    suspend fun updateTask(task: TaskEntity): TaskEntity
 
     @Update
-    suspend fun updateTaskFile(taskFile: TaskFileEntity)
+    suspend fun updateTaskFile(taskFile: TaskFileEntity): TaskFileEntity
+
+    @Query("UPDATE task_files SET is_on_server = :isUploaded WHERE task_id = :taskFileId")
+    suspend fun updateTaskUploadStatus(taskFileId: Long, isUploaded: Boolean): TaskFileEntity
 
     @Query("SELECT * FROM tasks")
     suspend fun getTasks(): Flow<List<TaskEntity>>

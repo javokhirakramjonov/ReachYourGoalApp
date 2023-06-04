@@ -74,7 +74,10 @@ fun CreateTaskScreen(
             when (effect) {
                 CreateTaskScreenEffect.CloseScreen -> navHostController.popBackStack()
                 is CreateTaskScreenEffect.ShowErrorMessage -> snackBarHostState.showSnackbar(
-                    SnackBarStyles.ErrorSnackBar(effect.message)
+                    SnackBarStyles.ErrorSnackBar(effect.errorMessage)
+                )
+                is CreateTaskScreenEffect.ShowSuccessMessage -> snackBarHostState.showSnackbar(
+                    SnackBarStyles.SuccessSnackBar(effect.successMessage)
                 )
             }
         }

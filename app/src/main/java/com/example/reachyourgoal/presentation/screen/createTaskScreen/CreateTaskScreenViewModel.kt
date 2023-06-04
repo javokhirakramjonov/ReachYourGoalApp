@@ -14,8 +14,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -120,12 +122,24 @@ class CreateTaskScreenViewModel @Inject constructor(
                         state.copy(isLoading = true)
                     }
                 }
+                .onEach {
+                    _uiEffect.emit(
+                        CreateTaskScreenEffect.ShowSuccessMessage(
+                            "Saved offline."
+                        )
+                    )
+                }
+                .catch { error ->
+                    error.message?.let { errorMessage ->
+                        _uiEffect.emit(CreateTaskScreenEffect.ShowErrorMessage(errorMessage))
+                    }
+                }
                 .onCompletion { error ->
                     _uiState.update { state ->
                         state.copy(isLoading = false)
                     }
-                    if (error != null) {
-                        _uiEffect.emit(CreateTaskScreenEffect.ShowErrorMessage(error.message.toString()))
+                    error?.message?.let { errorMessage ->
+                        _uiEffect.emit(CreateTaskScreenEffect.ShowErrorMessage(errorMessage))
                     }
                 }
                 .collect()

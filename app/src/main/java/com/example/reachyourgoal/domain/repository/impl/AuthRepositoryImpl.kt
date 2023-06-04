@@ -5,7 +5,7 @@ import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.domain.repository.result.LoginResult
 import com.example.reachyourgoal.service.NetworkStatusService
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
-import com.example.reachyourgoal.util.SOMETHING_WENT_WRONG
+import com.example.reachyourgoal.util.getErrorMessageOrDefault
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -32,12 +32,12 @@ class AuthRepositoryImpl @Inject constructor(
         runCatching {
             auth.signInWithEmailAndPassword(email, password).await()
         }.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }
         val userDetailsResult = runCatching {
             firestore.collection(COLLECTION_USER).document(email).get().await()
         }.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }
         if (userDetailsResult.exists()) {
             emit(LoginResult.Success)
@@ -54,7 +54,7 @@ class AuthRepositoryImpl @Inject constructor(
         runCatching {
             auth.createUserWithEmailAndPassword(email, password).await()
         }.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }
         emit(Result.success(Unit))
     }
@@ -69,23 +69,19 @@ class AuthRepositoryImpl @Inject constructor(
         val imageUrl = userModel.imageUri?.runCatching {
             firebaseStorage.child(email).putFile(this).await()
         }?.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }?.runCatching {
             storage.downloadUrl.await()
         }?.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }
 
         runCatching {
             firestore.collection(COLLECTION_USER).document(email)
                 .set(userModel.copy(imageUri = imageUrl)).await()
         }.getOrElse {
-            throw (Throwable(getErrorMessageOrDefault(it)))
+            throw Throwable(getErrorMessageOrDefault(it))
         }
         emit(Result.success(Unit))
-    }
-
-    private fun getErrorMessageOrDefault(throwable: Throwable?): String {
-        return throwable?.message ?: SOMETHING_WENT_WRONG
     }
 }
