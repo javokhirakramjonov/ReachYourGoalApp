@@ -25,15 +25,26 @@ class AuthRepositoryImpl @Inject constructor(
         const val COLLECTION_USER = "users"
     }
 
-    override fun login(email: String, password: String) = flow {
+    override fun loginOrRegister(email: String, password: String) = flow {
         if (!networkStatusService.isInternetAvailable()) {
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
+
+        val signInMethods = runCatching {
+            auth.fetchSignInMethodsForEmail(email).await()
+        }.getOrElse {
+            throw Throwable(getErrorMessageOrDefault(it))
+        }.signInMethods
+
         runCatching {
-            auth.signInWithEmailAndPassword(email, password).await()
+            if (signInMethods.isNullOrEmpty())
+                auth.createUserWithEmailAndPassword(email, password).await()
+            else
+                auth.signInWithEmailAndPassword(email, password).await()
         }.getOrElse {
             throw Throwable(getErrorMessageOrDefault(it))
         }
+
         val userDetailsResult = runCatching {
             firestore.collection(COLLECTION_USER).document(email).get().await()
         }.getOrElse {
@@ -44,19 +55,6 @@ class AuthRepositoryImpl @Inject constructor(
         } else {
             emit(LoginResult.UserDetailsRequired)
         }
-
-    }
-
-    override fun register(email: String, password: String) = flow {
-        if (!networkStatusService.isInternetAvailable()) {
-            throw Exception(INTERNET_IS_NOT_AVAILABLE)
-        }
-        runCatching {
-            auth.createUserWithEmailAndPassword(email, password).await()
-        }.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
-        }
-        emit(Result.success(Unit))
     }
 
     override fun saveUserDetails(userModel: UserModel) = flow {

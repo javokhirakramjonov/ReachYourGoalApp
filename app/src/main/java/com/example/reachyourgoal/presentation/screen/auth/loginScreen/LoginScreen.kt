@@ -70,13 +70,6 @@ fun LoginScreen(
                     )
                 }
 
-                LoginScreenEffect.NavigateToRegisterScreen -> {
-                    navHostController.navigateWithPopUp(
-                        Screen.RegisterScreen.route,
-                        Screen.LoginScreen.route
-                    )
-                }
-
                 LoginScreenEffect.NavigateToUserDetailsScreen -> {
                     navHostController.navigate(Screen.UserDetailsScreen.route)
                 }
@@ -125,14 +118,6 @@ fun LoginScreen(
                     enabled = uiState.isLoading.not()
                 ) {
                     Text("Login")
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-                Button(
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    onClick = { viewModel.onEvent(LoginScreenEvent.OnRegisterBtnClicked) },
-                    enabled = uiState.isLoading.not()
-                ) {
-                    Text("Create Account")
                 }
             }
             if (uiState.isLoading) {

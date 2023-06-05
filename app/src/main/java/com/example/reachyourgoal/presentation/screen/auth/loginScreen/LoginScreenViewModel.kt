@@ -5,7 +5,6 @@ import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
 import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.domain.repository.result.LoginResult
-import com.example.reachyourgoal.presentation.screen.auth.registerScreen.RegisterScreenEffect
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,7 +48,6 @@ class LoginScreenViewModel @Inject constructor(
             is LoginScreenEvent.OnEmailChanged -> onEmailChanged(event.email)
             is LoginScreenEvent.OnPasswordChanged -> onPasswordChanged(event.password)
             LoginScreenEvent.OnLoginBtnClicked -> onLogin()
-            LoginScreenEvent.OnRegisterBtnClicked -> onCreateAccountBtnClicked()
         }
     }
 
@@ -82,7 +80,7 @@ class LoginScreenViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             authRepository
-                .login(email, password)
+                .loginOrRegister(email, password)
                 .onStart {
                     _uiState.update { state ->
                         state.copy(isLoading = true)
@@ -132,11 +130,5 @@ class LoginScreenViewModel @Inject constructor(
             state.copy(passwordError = Validators.passwordValidator(password))
         }
         return password
-    }
-
-    private fun onCreateAccountBtnClicked() {
-        viewModelScope.launch {
-            _uiEffect.emit(LoginScreenEffect.NavigateToRegisterScreen)
-        }
     }
 }
