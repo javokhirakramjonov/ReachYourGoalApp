@@ -5,7 +5,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.reachyourgoal.presentation.screen.auth.loginScreen.LoginScreen
-import com.example.reachyourgoal.presentation.screen.auth.registerScreen.RegisterScreen
 import com.example.reachyourgoal.presentation.screen.auth.userDetailsScreen.UserDetailsScreen
 import com.example.reachyourgoal.presentation.screen.createTaskScreen.CreateTaskScreen
 import com.example.reachyourgoal.presentation.screen.mainScreen.MainScreen
@@ -23,16 +22,12 @@ fun SetupNavGraph(navHostController: NavHostController) {
             LoginScreen(navHostController)
         }
 
-        composable(route = Screen.MainScreen.route) {
-            MainScreen(navHostController)
-        }
-
-        composable(route = Screen.RegisterScreen.route) {
-            RegisterScreen(navHostController)
-        }
-
         composable(route = Screen.UserDetailsScreen.route) {
             UserDetailsScreen(navHostController)
+        }
+
+        composable(route = Screen.MainScreen.route) {
+            MainScreen(navHostController)
         }
 
         composable(route = Screen.CreateTaskScreen.route) {
