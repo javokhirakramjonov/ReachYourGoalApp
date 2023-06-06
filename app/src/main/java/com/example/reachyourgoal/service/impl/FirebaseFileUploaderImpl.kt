@@ -14,6 +14,8 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.UploadTask
 import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -48,6 +50,7 @@ class FirebaseFileUploaderImpl @Inject constructor(
     override suspend fun uploadFiles(taskId: UUID) {
         taskDao
             .getTaskFilesByTaskId(taskId)
+            .filterNot { it.isOnServer }
             .forEach { taskFileEntity ->
                 val fileUploadModel = FileUploadModel(
                     taskFileEntity.id,
@@ -88,16 +91,18 @@ class FirebaseFileUploaderImpl @Inject constructor(
                             filesToUpload[notificationId]!!.copy(state = FileUploadState.FINISHED)
                         trySend(filesToUpload[notificationId]!!)
 
-                        launch {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            val taskFileId = filesToUpload[notificationId]!!.taskFileId
+                            filesToUpload.remove(notificationId)
+
                             runCatching {
                                 it.storage.downloadUrl.await()
-                            }.getOrNull()?.let { taskFileUrl ->
+                            }.getOrNull()?.let {
                                 saveFileToFirestore(
-                                    filesToUpload[notificationId]!!.taskFileId,
-                                    taskFileUrl.toString()
+                                    taskFileId,
+                                    it.toString()
                                 )
                             }
-                            filesToUpload.remove(notificationId)
                         }
                     }
             }

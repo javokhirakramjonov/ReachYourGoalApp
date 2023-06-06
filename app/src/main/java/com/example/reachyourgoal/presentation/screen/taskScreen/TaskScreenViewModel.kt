@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
@@ -37,11 +36,12 @@ class TaskScreenViewModel @Inject constructor(
 ) :
     BaseViewModel<TaskScreenState, TaskScreenEvent, TaskScreenEffect>() {
 
-    private var loadTaskJob : Job? = null
+    private var loadTaskJob: Job? = null
+    private var taskId: UUID? = null
 
     private val _uiState = MutableStateFlow(
         TaskScreenState(
-            AvailableStatus.NOT_AVAILABLE,
+            AvailableStatus.EDITING,
             false,
             EMPTY_STRING,
             EMPTY_STRING,
@@ -72,6 +72,11 @@ class TaskScreenViewModel @Inject constructor(
         }
     }
 
+    fun setTaskId(taskId: UUID) {
+        this.taskId = taskId
+        loadTask()
+    }
+
     private fun onTaskNameChanged(taskName: String) {
         _uiState.update { state ->
             state.copy(taskName = taskName, taskNameError = null)
@@ -90,7 +95,7 @@ class TaskScreenViewModel @Inject constructor(
             selectedFileUris?.let { uris ->
                 fileUrisAndOnServerStatuses.addAll(
                     0,
-                    uris.map { uri -> TaskFileModel(uri, AvailableStatus.NOT_AVAILABLE) })
+                    uris.map { uri -> TaskFileModel(uri, AvailableStatus.EDITING) })
             }
             state.copy(
                 taskFiles = fileUrisAndOnServerStatuses,
@@ -133,8 +138,16 @@ class TaskScreenViewModel @Inject constructor(
                 _uiState.value.availableStatus,
                 _uiState.value.taskFiles
             )
-            taskRepository
-                .saveTask(task)
+
+            taskId?.let {
+                runCatching {
+                    taskRepository.saveTask(it, task)
+                }.getOrElse { error ->
+                    error.message?.let { errorMessage ->
+                        _uiEffect.emit(TaskScreenEffect.ShowErrorMessage(errorMessage))
+                    }
+                }
+            } ?: taskRepository.createTask(task)
                 .onStart {
                     _uiState.update { state ->
                         state.copy(isLoading = true)
@@ -142,7 +155,9 @@ class TaskScreenViewModel @Inject constructor(
                 }
                 .onEach {
                     when (it) {
-                        is SaveTaskResult.TaskSavedOffline -> loadTask(it.taskId)
+                        is SaveTaskResult.TaskSavedOffline -> {
+                            setTaskId(it.taskId)
+                        }
                     }
                 }
                 .catch { error ->
@@ -162,26 +177,28 @@ class TaskScreenViewModel @Inject constructor(
         }
     }
 
-    private fun loadTask(taskId: UUID) {
+    private fun loadTask() {
         loadTaskJob?.cancel()
-        loadTaskJob = CoroutineScope(Dispatchers.IO).launch {
-            taskRepository
-                .getTask(taskId)
-                .onEach { taskAndFileModel ->
-                    _uiState.update { state ->
-                        state.copy(
-                            availableStatus = if (taskAndFileModel.task.isOnServer)
-                                AvailableStatus.OFFLINE_AND_ONLINE
-                            else
-                                AvailableStatus.OFFLINE,
-                            taskFiles = mergeUiFileAndDbFiles(
-                                state.taskFiles,
-                                taskAndFileModel.files
+        taskId?.let {
+            loadTaskJob = CoroutineScope(Dispatchers.IO).launch {
+                taskRepository
+                    .getTask(it)
+                    .onEach { taskAndFileModel ->
+                        _uiState.update { state ->
+                            state.copy(
+                                availableStatus = if (taskAndFileModel.task.isOnServer)
+                                    AvailableStatus.OFFLINE_AND_ONLINE
+                                else
+                                    AvailableStatus.OFFLINE,
+                                taskFiles = mergeUiFileAndDbFiles(
+                                    state.taskFiles,
+                                    taskAndFileModel.files
+                                )
                             )
-                        )
+                        }
                     }
-                }
-                .collect()
+                    .collect()
+            }
         }
     }
 

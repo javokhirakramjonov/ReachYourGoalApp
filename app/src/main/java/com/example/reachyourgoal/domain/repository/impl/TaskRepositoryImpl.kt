@@ -14,6 +14,7 @@ import com.example.reachyourgoal.util.getErrorMessageOrDefault
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
 
@@ -29,15 +30,46 @@ class TaskRepositoryImpl @Inject constructor(
         private const val TASK_COLLECTION = "tasks"
     }
 
-    override fun saveTask(task: TaskModel) = flow {
+    override fun createTask(task: TaskModel) = flow {
 
+        val taskEntity = createTaskInDatabase(task)
+
+        emit(SaveTaskResult.TaskSavedOffline(taskEntity.id))
+
+        if (!networkStatusService.isInternetAvailable()) {
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
+        }
+
+        saveTaskInFirebase(taskEntity.id, task)
+
+        taskDao.updateTaskOnServerStatus(taskEntity.id, true)
+
+        firebaseFileUploader.uploadFiles(taskEntity.id)
+    }
+
+    override suspend fun saveTask(taskId: UUID, task: TaskModel) {
+
+        updateTaskInDatabase(taskId, task)
+
+        if (!networkStatusService.isInternetAvailable()) {
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
+        }
+
+        saveTaskInFirebase(taskId, task)
+
+        taskDao.updateTaskOnServerStatus(taskId, true)
+
+        firebaseFileUploader.uploadFiles(taskId)
+    }
+
+    private suspend fun createTaskInDatabase(task: TaskModel): TaskEntity {
         val taskEntity = TaskEntity(
             name = task.name,
             description = task.description,
             isOnServer = false
         )
 
-        val taskId = taskDao.insertTask(taskEntity)
+        taskDao.insertTask(taskEntity)
 
         task.taskFiles.forEach { taskFile ->
             taskDao.insertTaskFile(
@@ -49,24 +81,53 @@ class TaskRepositoryImpl @Inject constructor(
             )
         }
 
-        emit(SaveTaskResult.TaskSavedOffline(taskEntity.id))
+        return taskEntity
+    }
 
-        if (!networkStatusService.isInternetAvailable()) {
-            throw Exception(INTERNET_IS_NOT_AVAILABLE)
-        }
-
+    private suspend fun saveTaskInFirebase(taskId: UUID, task: TaskModel) {
         runCatching {
             fireStore
                 .collection(TASK_COLLECTION)
                 .document(taskId.toString())
-                .set(FirestoreTaskModel(taskEntity.id, task.name, task.description))
+                .set(FirestoreTaskModel(taskId, task.name, task.description))
+                .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }
+    }
 
-        taskDao.updateTaskOnServerStatus(taskEntity.id, true)
+    private suspend fun updateTaskInDatabase(taskId: UUID, task: TaskModel) {
+        val taskEntity = taskDao.getTaskById(taskId)
 
-        firebaseFileUploader.uploadFiles(taskEntity.id)
+        taskDao.updateTask(
+            taskEntity.copy(
+                name = task.name,
+                description = task.description
+            )
+        )
+
+        val taskFileEntities = taskDao.getTaskFilesByTaskId(taskId)
+        val taskFiles = task.taskFiles
+
+        val fileEntityMap = taskFileEntities.associateBy { it.fileUri }
+        val fileMap = taskFiles.associateBy { it.uri.toString() }
+
+        val deleteList = taskFileEntities.filterNot { fileMap.containsKey(it.fileUri) }
+        val insertList = taskFiles.filterNot { fileEntityMap.containsKey(it.uri.toString()) }
+
+        deleteList.forEach {
+            taskDao.deleteTaskFile(it)
+        }
+
+        insertList.forEach {
+            taskDao.insertTaskFile(
+                TaskFileEntity(
+                    fileUri = it.uri.toString(),
+                    isOnServer = false,
+                    taskId = taskId
+                )
+            )
+        }
     }
 
     override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFileFlow(taskId)

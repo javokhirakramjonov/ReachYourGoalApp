@@ -8,7 +8,9 @@ import java.util.UUID
 
 interface TaskRepository {
 
-    fun saveTask(task: TaskModel): Flow<SaveTaskResult>
+    fun createTask(task: TaskModel): Flow<SaveTaskResult>
+
+    suspend fun saveTask(taskId: UUID, task: TaskModel)
 
     suspend fun getTask(taskId: UUID): Flow<TaskAndFileModel>
 
