@@ -7,7 +7,6 @@ import com.example.reachyourgoal.common.Validators
 import com.example.reachyourgoal.domain.model.local.Sex
 import com.example.reachyourgoal.domain.model.local.UserModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
-import com.example.reachyourgoal.presentation.screen.auth.registerScreen.RegisterScreenEffect
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -12,6 +12,6 @@ data class TaskEntity(
     val id: UUID = UUID.randomUUID(),
     val name: String,
     val description: String,
-    @ColumnInfo(name = "is_uploaded_to_server")
+    @ColumnInfo(name = "is_on_server")
     val isOnServer: Boolean
 )

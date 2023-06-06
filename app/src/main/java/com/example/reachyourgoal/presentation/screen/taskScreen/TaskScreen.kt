@@ -114,6 +114,8 @@ fun TaskScreen(
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.height(20.dp))
+                Text(uiState.availableStatus.name)
+                Spacer(modifier = Modifier.height(16.dp))
                 TaskNameInput(
                     modifier = modifierForColumnElements, viewModel = viewModel, uiState = uiState
                 )

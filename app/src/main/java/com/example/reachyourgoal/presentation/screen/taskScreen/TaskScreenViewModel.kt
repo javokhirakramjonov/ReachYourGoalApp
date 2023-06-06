@@ -13,7 +13,9 @@ import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
 import com.example.reachyourgoal.util.EMPTY_STRING
 import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
@@ -33,6 +36,8 @@ class TaskScreenViewModel @Inject constructor(
     private val taskRepository: TaskRepository
 ) :
     BaseViewModel<TaskScreenState, TaskScreenEvent, TaskScreenEffect>() {
+
+    private var loadTaskJob : Job? = null
 
     private val _uiState = MutableStateFlow(
         TaskScreenState(
@@ -158,7 +163,8 @@ class TaskScreenViewModel @Inject constructor(
     }
 
     private fun loadTask(taskId: UUID) {
-        viewModelScope.launch {
+        loadTaskJob?.cancel()
+        loadTaskJob = CoroutineScope(Dispatchers.IO).launch {
             taskRepository
                 .getTask(taskId)
                 .onEach { taskAndFileModel ->
@@ -219,5 +225,11 @@ class TaskScreenViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(isFilesBeingSelected = true)
         }
+    }
+
+    override fun onCleared() {
+        loadTaskJob?.cancel()
+        loadTaskJob = null
+        super.onCleared()
     }
 }

@@ -31,16 +31,16 @@ class TaskRepositoryImpl @Inject constructor(
 
     override fun saveTask(task: TaskModel) = flow {
 
-        var taskEntity = taskDao.addTask(
-            TaskEntity(
-                name = task.name,
-                description = task.description,
-                isOnServer = false
-            )
+        val taskEntity = TaskEntity(
+            name = task.name,
+            description = task.description,
+            isOnServer = false
         )
 
-        val taskFileEntities = task.taskFiles.map { taskFile ->
-            taskDao.addTaskFile(
+        val taskId = taskDao.insertTask(taskEntity)
+
+        task.taskFiles.forEach { taskFile ->
+            taskDao.insertTaskFile(
                 TaskFileEntity(
                     fileUri = taskFile.uri.toString(),
                     isOnServer = false,
@@ -58,17 +58,17 @@ class TaskRepositoryImpl @Inject constructor(
         runCatching {
             fireStore
                 .collection(TASK_COLLECTION)
-                .document(taskEntity.id.toString())
-                .set(FirestoreTaskModel(taskEntity.id, taskEntity.name, taskEntity.description))
+                .document(taskId.toString())
+                .set(FirestoreTaskModel(taskEntity.id, task.name, task.description))
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }
 
-        taskEntity = taskDao.updateTask(taskEntity.copy(isOnServer = true))
+        taskDao.updateTaskOnServerStatus(taskEntity.id, true)
 
-        firebaseFileUploader.uploadFiles(taskEntity.id, taskFileEntities)
+        firebaseFileUploader.uploadFiles(taskEntity.id)
     }
 
-    override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFile(taskId)
+    override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFileFlow(taskId)
 
 }

@@ -7,7 +7,7 @@ import java.util.UUID
 
 interface FirebaseFileUploader {
 
-    fun uploadFiles(taskId: UUID, taskFiles: List<TaskFileEntity>)
+    suspend fun uploadFiles(taskId: UUID)
 
     fun startUploadFile(notificationId: Int): Flow<FileUploadModel>
 

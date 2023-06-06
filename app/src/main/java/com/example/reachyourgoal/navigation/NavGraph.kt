@@ -13,7 +13,7 @@ import com.example.reachyourgoal.presentation.screen.taskScreen.TaskScreen
 @Composable
 fun SetupNavGraph(navHostController: NavHostController) {
 
-    NavHost(navController = navHostController, startDestination = Screen.Splash.route) {
+    NavHost(navController = navHostController, startDestination = Screen.TaskScreen.route) {
         composable(route = Screen.Splash.route) {
             SplashScreen(navHostController)
         }
@@ -30,7 +30,7 @@ fun SetupNavGraph(navHostController: NavHostController) {
             MainScreen(navHostController)
         }
 
-        composable(route = Screen.CreateTaskScreen.route) {
+        composable(route = Screen.TaskScreen.route) {
             TaskScreen(navHostController)
         }
     }
