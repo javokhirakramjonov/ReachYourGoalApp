@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.reachyourgoal.R
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
+import com.example.reachyourgoal.service.controller.FirebaseFileUploadServiceController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,8 +25,8 @@ import javax.inject.Provider
 class FirebaseFileUploadService : Service() {
 
     @Inject
-    lateinit var serviceModelProvider: Provider<FirebaseFileUploadServiceModel>
-    private lateinit var serviceModel: FirebaseFileUploadServiceModel
+    lateinit var serviceModelProvider: Provider<FirebaseFileUploadServiceController>
+    private lateinit var serviceModel: FirebaseFileUploadServiceController
 
     companion object {
         const val CHANNEL_ID = "FILE_UPLOAD"

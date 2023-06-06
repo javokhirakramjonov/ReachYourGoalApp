@@ -6,9 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.reachyourgoal.presentation.screen.auth.loginScreen.LoginScreen
 import com.example.reachyourgoal.presentation.screen.auth.userDetailsScreen.UserDetailsScreen
-import com.example.reachyourgoal.presentation.screen.createTaskScreen.CreateTaskScreen
 import com.example.reachyourgoal.presentation.screen.mainScreen.MainScreen
 import com.example.reachyourgoal.presentation.screen.splashScreen.SplashScreen
+import com.example.reachyourgoal.presentation.screen.taskScreen.TaskScreen
 
 @Composable
 fun SetupNavGraph(navHostController: NavHostController) {
@@ -31,7 +31,7 @@ fun SetupNavGraph(navHostController: NavHostController) {
         }
 
         composable(route = Screen.CreateTaskScreen.route) {
-            CreateTaskScreen(navHostController)
+            TaskScreen(navHostController)
         }
     }
 

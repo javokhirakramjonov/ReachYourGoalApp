@@ -10,6 +10,7 @@ import com.example.reachyourgoal.domain.model.databaseModel.TaskAndFileModel
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 import kotlinx.coroutines.flow.Flow
+import java.util.UUID
 
 @Dao
 interface TaskDao {
@@ -27,12 +28,15 @@ interface TaskDao {
     suspend fun updateTaskFile(taskFile: TaskFileEntity): TaskFileEntity
 
     @Query("UPDATE task_files SET is_on_server = :isUploaded WHERE task_id = :taskFileId")
-    suspend fun updateTaskUploadStatus(taskFileId: Long, isUploaded: Boolean): TaskFileEntity
+    suspend fun updateTaskUploadStatus(taskFileId: UUID, isUploaded: Boolean): TaskFileEntity
 
     @Query("SELECT * FROM tasks")
     suspend fun getTasks(): Flow<List<TaskEntity>>
 
     @Transaction
     @Query("SELECT * FROM tasks WHERE task_id = :taskId")
-    suspend fun getTaskAndFile(taskId: Long): Flow<TaskAndFileModel>
+    suspend fun getTaskAndFile(taskId: UUID): Flow<TaskAndFileModel>
+
+    @Query("SELECT * FROM task_files WHERE task_file_id = :taskFileId")
+    suspend fun getTaskFileById(taskFileId: UUID): TaskFileEntity
 }

@@ -1,6 +1,5 @@
-package com.example.reachyourgoal.presentation.screen.createTaskScreen
+package com.example.reachyourgoal.presentation.screen.taskScreen
 
-import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -52,6 +51,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.example.reachyourgoal.domain.model.local.AvailableStatus
+import com.example.reachyourgoal.domain.model.local.TaskFileModel
+import com.example.reachyourgoal.navigation.TaskScreenMode
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
 import com.example.reachyourgoal.ui.common.FilePicker
@@ -62,8 +64,10 @@ import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateTaskScreen(
-    navHostController: NavHostController, viewModel: CreateTaskScreenViewModel = hiltViewModel()
+fun TaskScreen(
+    navHostController: NavHostController,
+    mode: TaskScreenMode = TaskScreenMode.CREATE,
+    viewModel: TaskScreenViewModel = hiltViewModel()
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -72,11 +76,12 @@ fun CreateTaskScreen(
     LaunchedEffect(true) {
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
-                CreateTaskScreenEffect.CloseScreen -> navHostController.popBackStack()
-                is CreateTaskScreenEffect.ShowErrorMessage -> snackBarHostState.showSnackbar(
+                TaskScreenEffect.CloseScreen -> navHostController.popBackStack()
+                is TaskScreenEffect.ShowErrorMessage -> snackBarHostState.showSnackbar(
                     SnackBarStyles.ErrorSnackBar(effect.errorMessage)
                 )
-                is CreateTaskScreenEffect.ShowSuccessMessage -> snackBarHostState.showSnackbar(
+
+                is TaskScreenEffect.ShowSuccessMessage -> snackBarHostState.showSnackbar(
                     SnackBarStyles.SuccessSnackBar(effect.successMessage)
                 )
             }
@@ -132,13 +137,13 @@ fun CreateTaskScreen(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Button(modifier = Modifier.weight(1f),
-                        onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnCloseBtnClicked) }) {
+                        onClick = { viewModel.onEvent(TaskScreenEvent.OnCloseBtnClicked) }) {
                         Text("Cancel")
                     }
                     Spacer(modifier = Modifier.width(20.dp))
                     Button(modifier = Modifier.weight(1f),
-                        onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnCreateTaskBtnClicked) }) {
-                        Text("Create task")
+                        onClick = { viewModel.onEvent(TaskScreenEvent.OnSaveBtnClicked) }) {
+                        Text("Save task")
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
@@ -149,7 +154,7 @@ fun CreateTaskScreen(
 
             if (uiState.isFilesBeingSelected) {
                 FilePicker { fileUris ->
-                    viewModel.onEvent(CreateTaskScreenEvent.OnFilesAdded(fileUris))
+                    viewModel.onEvent(TaskScreenEvent.OnFilesAdded(fileUris))
                 }
             }
         }
@@ -159,13 +164,13 @@ fun CreateTaskScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TaskNameInput(
-    modifier: Modifier, viewModel: CreateTaskScreenViewModel, uiState: CreateTaskScreenState
+    modifier: Modifier, viewModel: TaskScreenViewModel, uiState: TaskScreenState
 ) {
     OutlinedTextField(
         modifier = modifier,
         value = uiState.taskName,
         onValueChange = { newValue ->
-            viewModel.onEvent(CreateTaskScreenEvent.OnTaskNameChanged(newValue))
+            viewModel.onEvent(TaskScreenEvent.OnTaskNameChanged(newValue))
         },
         label = {
             Text("taskName")
@@ -180,13 +185,13 @@ private fun TaskNameInput(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TaskDescriptionInput(
-    modifier: Modifier, viewModel: CreateTaskScreenViewModel, uiState: CreateTaskScreenState
+    modifier: Modifier, viewModel: TaskScreenViewModel, uiState: TaskScreenState
 ) {
     OutlinedTextField(
         modifier = modifier,
         value = uiState.taskDescription,
         onValueChange = { newValue ->
-            viewModel.onEvent(CreateTaskScreenEvent.OnTaskDescriptionChanged(newValue))
+            viewModel.onEvent(TaskScreenEvent.OnTaskDescriptionChanged(newValue))
         },
         label = {
             Text("description")
@@ -200,7 +205,7 @@ private fun TaskDescriptionInput(
 
 @Composable
 private fun SelectedFiles(
-    modifier: Modifier, viewModel: CreateTaskScreenViewModel, uiState: CreateTaskScreenState
+    modifier: Modifier, viewModel: TaskScreenViewModel, uiState: TaskScreenState
 ) {
     Column(
         modifier = modifier
@@ -211,20 +216,20 @@ private fun SelectedFiles(
     ) {
         Text("Necessary files")
         Spacer(modifier = Modifier.height(12.dp))
-        ShowFiles(uiState.fileUris) { fileToDelete ->
-            viewModel.onEvent(CreateTaskScreenEvent.OnFileDeleted(fileToDelete))
+        ShowFiles(uiState.taskFiles) { fileToDelete ->
+            viewModel.onEvent(TaskScreenEvent.OnFileDeleted(fileToDelete))
         }
         Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround
         ) {
             Button(modifier = Modifier.weight(1f),
-                onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnDeleteAllFilesBtnClicked) }) {
+                onClick = { viewModel.onEvent(TaskScreenEvent.OnDeleteAllFilesBtnClicked) }) {
                 Text("Delete All")
             }
             Spacer(modifier = Modifier.width(20.dp))
             Button(modifier = Modifier.weight(1f),
-                onClick = { viewModel.onEvent(CreateTaskScreenEvent.OnAddFileBtnClicked) }) {
+                onClick = { viewModel.onEvent(TaskScreenEvent.OnAddFileBtnClicked) }) {
                 Text("Add file")
             }
         }
@@ -234,14 +239,12 @@ private fun SelectedFiles(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ShowFiles(
-    fileUris: List<Uri>, onDelete: (Uri) -> Unit
+    files: List<TaskFileModel>, onDelete: (TaskFileModel) -> Unit
 ) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        items(fileUris) {
+        items(files) {
             FileElement(
-                Modifier.animateItemPlacement(),
-                it,
-                onDelete
+                Modifier.animateItemPlacement(), it, onDelete
             )
         }
     }
@@ -249,9 +252,7 @@ private fun ShowFiles(
 
 @Composable
 private fun FileElement(
-    modifier: Modifier = Modifier,
-    fileUri: Uri,
-    onDelete: (Uri) -> Unit
+    modifier: Modifier = Modifier, file: TaskFileModel, onDelete: (TaskFileModel) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -267,7 +268,7 @@ private fun FileElement(
                 .align(Alignment.TopEnd), contentAlignment = Alignment.Center
         ) {
             IconButton(onClick = {
-                onDelete(fileUri)
+                onDelete(file)
             }) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -291,16 +292,20 @@ private fun FileElement(
                     contentDescription = "file"
                 )
             }
-            Box(
+            Column(
                 modifier = Modifier
                     .weight(0.3f)
-                    .fillMaxWidth(), contentAlignment = Alignment.Center
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = fileUri.path ?: "Unknown",
+                    text = file.uri.path ?: "Unknown",
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
+                )
+                Text(
+                    text = file.availableStatus.name
                 )
             }
         }
@@ -310,5 +315,6 @@ private fun FileElement(
 @Preview
 @Composable
 private fun FileElementPreview() {
-    FileElement(fileUri = File("Hello").toUri(), onDelete = {})
+    FileElement(file = TaskFileModel(File("Hello").toUri(), AvailableStatus.NOT_AVAILABLE),
+        onDelete = {})
 }

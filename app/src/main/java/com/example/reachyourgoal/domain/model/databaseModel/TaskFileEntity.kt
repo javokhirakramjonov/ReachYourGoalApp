@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.util.UUID
 
 @Entity(
     tableName = "task_files",
@@ -15,13 +16,13 @@ import androidx.room.PrimaryKey
     )]
 )
 data class TaskFileEntity(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     @ColumnInfo(name = "task_file_id")
-    val id: Long = 0,
+    val id: UUID = UUID.randomUUID(),
     @ColumnInfo(name = "file_uri")
     val fileUri: String,
     @ColumnInfo(name = "is_on_server")
     val isOnServer: Boolean,
     @ColumnInfo(name = "task_id")
-    val taskId: Long
+    val taskId: UUID
 )

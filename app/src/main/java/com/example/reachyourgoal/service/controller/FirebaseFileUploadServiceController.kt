@@ -1,7 +1,7 @@
-package com.example.reachyourgoal.service
+package com.example.reachyourgoal.service.controller
 
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
-import com.example.reachyourgoal.domain.repository.TaskRepository
+import com.example.reachyourgoal.service.FirebaseFileUploader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -10,8 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class FirebaseFileUploadServiceModel @Inject constructor(
-    private val repository: TaskRepository
+class FirebaseFileUploadServiceController @Inject constructor(
+    private val firebaseFileUploader: FirebaseFileUploader
 ) {
 
     private var job: Job? = null
@@ -22,7 +22,7 @@ class FirebaseFileUploadServiceModel @Inject constructor(
     fun startFileUpload(notificationId: Int) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
-            repository.startUploadFile(notificationId).collect {
+            firebaseFileUploader.startUploadFile(notificationId).collect {
                 _uploadState.emit(it)
             }
         }
@@ -30,24 +30,24 @@ class FirebaseFileUploadServiceModel @Inject constructor(
 
     fun pauseFileUpload(notificationId: Int) {
         CoroutineScope(Dispatchers.Default).launch {
-            _uploadState.emit(repository.pauseUploadFile(notificationId))
+            _uploadState.emit(firebaseFileUploader.pauseUploadFile(notificationId))
         }
     }
 
     fun resumeFileUpload(notificationId: Int) {
         CoroutineScope(Dispatchers.Default).launch {
-            _uploadState.emit(repository.resumeUploadFile(notificationId))
+            _uploadState.emit(firebaseFileUploader.resumeUploadFile(notificationId))
         }
     }
 
     fun cancelFileUpload(notificationId: Int) {
         CoroutineScope(Dispatchers.Default).launch {
-            _uploadState.emit(repository.cancelUploadFile(notificationId))
+            _uploadState.emit(firebaseFileUploader.cancelUploadFile(notificationId))
         }
     }
 
     fun restartFileUpload(notificationId: Int) {
-        repository.restartUploadFile(notificationId)
+        firebaseFileUploader.restartUploadFile(notificationId)
     }
 
     fun stop() {

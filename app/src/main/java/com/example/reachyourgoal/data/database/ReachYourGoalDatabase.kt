@@ -14,7 +14,7 @@ import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 @TypeConverters(TaskFileListConverter::class)
 abstract class ReachYourGoalDatabase : RoomDatabase() {
 
-    abstract fun getTaskDao() : TaskDao
+    abstract fun getTaskDao(): TaskDao
 
     companion object {
         @Volatile

@@ -33,7 +33,7 @@ class AuthRepositoryImpl @Inject constructor(
         val signInMethods = runCatching {
             auth.fetchSignInMethodsForEmail(email).await()
         }.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }.signInMethods
 
         runCatching {
@@ -42,13 +42,13 @@ class AuthRepositoryImpl @Inject constructor(
             else
                 auth.signInWithEmailAndPassword(email, password).await()
         }.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }
 
         val userDetailsResult = runCatching {
             firestore.collection(COLLECTION_USER).document(email).get().await()
         }.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }
         if (userDetailsResult.exists()) {
             emit(LoginResult.Success)
@@ -67,18 +67,18 @@ class AuthRepositoryImpl @Inject constructor(
         val imageUrl = userModel.imageUri?.runCatching {
             firebaseStorage.child(email).putFile(this).await()
         }?.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }?.runCatching {
             storage.downloadUrl.await()
         }?.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }
 
         runCatching {
             firestore.collection(COLLECTION_USER).document(email)
                 .set(userModel.copy(imageUri = imageUrl)).await()
         }.getOrElse {
-            throw Throwable(getErrorMessageOrDefault(it))
+            throw Exception(getErrorMessageOrDefault(it))
         }
         emit(Result.success(Unit))
     }
