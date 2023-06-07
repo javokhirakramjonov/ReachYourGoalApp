@@ -30,7 +30,7 @@ fun SetupNavGraph(navHostController: NavHostController) {
             MainScreen(navHostController)
         }
 
-        composable(route = Screen.TaskScreen.route) {
+        composable(route = "${Screen.TaskScreen.route}") {
             TaskScreen(navHostController)
         }
     }
