@@ -1,9 +1,13 @@
 package com.example.reachyourgoal.presentation.screen.taskScreen
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,19 +16,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudDone
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.NewLabel
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -36,7 +40,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -58,6 +65,7 @@ import com.example.reachyourgoal.util.getFileExtensionFromUri
 import com.example.reachyourgoal.util.getFileNameFromUri
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
+import java.lang.Integer.min
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -208,9 +216,12 @@ private fun TaskDescriptionInput(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SelectedFiles(
-    modifier: Modifier, viewModel: TaskScreenViewModel, uiState: TaskScreenState
+    modifier: Modifier,
+    viewModel: TaskScreenViewModel,
+    uiState: TaskScreenState
 ) {
     Column(
         modifier = modifier
@@ -219,36 +230,40 @@ private fun SelectedFiles(
             )
             .padding(12.dp)
     ) {
-        Text("Necessary files")
-        Spacer(modifier = Modifier.height(12.dp))
-        ShowFiles(uiState.taskFiles) { fileToDelete ->
-            viewModel.onEvent(TaskScreenEvent.OnFileDeleted(fileToDelete))
-        }
-        Spacer(modifier = Modifier.height(12.dp))
         Row(
-            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Button(modifier = Modifier.weight(1f),
-                onClick = { viewModel.onEvent(TaskScreenEvent.OnDeleteAllFilesBtnClicked) }) {
-                Text("Delete All")
+            Icon(imageVector = Icons.Filled.AttachFile, contentDescription = null)
+            Text("Attach file(s)")
+            Spacer(modifier = Modifier.weight(1f))
+            Button(
+                enabled = !uiState.isLoading,
+                onClick = { viewModel.onEvent(TaskScreenEvent.OnAddFileBtnClicked) }
+            ) {
+                Text("Add file(s)")
             }
-            Spacer(modifier = Modifier.width(20.dp))
-            Button(modifier = Modifier.weight(1f),
-                onClick = { viewModel.onEvent(TaskScreenEvent.OnAddFileBtnClicked) }) {
-                Text("Add file")
+        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(min(400, uiState.taskFiles.size * 100).dp)
+        ) {
+            items(uiState.taskFiles) {
+                FileElement(
+                    modifier = Modifier.animateItemPlacement(),
+                    file = it
+                ) { deletedFile ->
+                    viewModel.onEvent(TaskScreenEvent.OnFileDeleted(deletedFile))
+                }
             }
         }
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ShowFiles(
-    files: List<TaskFileModel>, onDelete: (TaskFileModel) -> Unit
-) {
-    TODO()
-}
-
 @Composable
 private fun FileElement(
     modifier: Modifier = Modifier,
@@ -266,30 +281,40 @@ private fun FileElement(
             .fillMaxWidth()
             .height(80.dp)
             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
-            imageVector = getFileIcon(
-                extension = getFileExtensionFromUri(
-                    contentResolver,
-                    file.uri
-                ),
-            ),
+            modifier = Modifier.weight(0.1f),
+            imageVector = getFileIcon(extension = extension),
             contentDescription = null
         )
         Text(
-            text = "$fileName.$extension"
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .basicMarquee(),
+            text = "$fileName"
         )
-        Icon(
-            imageVector =
-            when (file.availableStatus) {
-                AvailableStatus.EDITING -> Icons.Filled.NewLabel
-                AvailableStatus.OFFLINE -> Icons.Filled.CloudDownload
-                AvailableStatus.OFFLINE_AND_ONLINE -> Icons.Filled.CloudDone
-            },
-            contentDescription = null
-        )
-        IconButton(onClick = { onDelete(file) }) {
+        Canvas(
+            modifier = Modifier
+                .weight(0.1f)
+                .padding(2.dp)
+                .fillMaxSize(0.8f)
+        ) {
+            val color = when (file.availableStatus) {
+                AvailableStatus.EDITING -> Color.Gray
+                AvailableStatus.OFFLINE -> Color.Yellow
+                AvailableStatus.OFFLINE_AND_ONLINE -> Color.Green
+            }
+            drawCircle(color, style = Fill)
+        }
+        Box(modifier = Modifier
+            .weight(0.1f)
+            .padding(2.dp)
+            .border(1.dp, MaterialTheme.colorScheme.error, CircleShape)
+            .clickable { onDelete(file) }
+            .padding(4.dp)
+        ) {
             Icon(
                 imageVector = Icons.Filled.Close,
                 contentDescription = null,
