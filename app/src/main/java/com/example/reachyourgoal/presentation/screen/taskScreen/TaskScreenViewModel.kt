@@ -72,9 +72,13 @@ class TaskScreenViewModel @Inject constructor(
         }
     }
 
-    fun setTaskId(taskId: UUID) {
+    private fun setTaskId(taskId: UUID) {
         this.taskId = taskId
         loadTask()
+    }
+
+    fun setTaskId(taskId: String) {
+        setTaskId(UUID.fromString(taskId))
     }
 
     private fun onTaskNameChanged(taskName: String) {

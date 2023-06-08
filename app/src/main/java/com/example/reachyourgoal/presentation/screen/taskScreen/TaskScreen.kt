@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -65,14 +67,12 @@ import com.example.reachyourgoal.util.getFileExtensionFromUri
 import com.example.reachyourgoal.util.getFileNameFromUri
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
-import java.lang.Integer.min
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
     navHostController: NavHostController,
-    taskId: UUID? = null,
+    taskId: String?,
     viewModel: TaskScreenViewModel = hiltViewModel()
 ) {
 
@@ -119,13 +119,18 @@ fun TaskScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     modifier = modifierForColumnElements,
-                    text = "Create task",
+                    text = "Task",
                     color = MaterialTheme.colorScheme.primary,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Text(uiState.availableStatus.name)
+                ShowAvailableStatus(
+                    modifier = Modifier
+                        .padding(start = 14.dp)
+                        .size(24.dp),
+                    status = uiState.availableStatus
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 TaskNameInput(
                     modifier = modifierForColumnElements, viewModel = viewModel, uiState = uiState
@@ -151,7 +156,7 @@ fun TaskScreen(
                 ) {
                     Button(modifier = Modifier.weight(1f),
                         onClick = { viewModel.onEvent(TaskScreenEvent.OnCloseBtnClicked) }) {
-                        Text("Cancel")
+                        Text("Back")
                     }
                     Spacer(modifier = Modifier.width(20.dp))
                     Button(modifier = Modifier.weight(1f),
@@ -231,25 +236,23 @@ private fun SelectedFiles(
             .padding(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(imageVector = Icons.Filled.AttachFile, contentDescription = null)
-            Text("Attach file(s)")
+            Text("Attached files")
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 enabled = !uiState.isLoading,
                 onClick = { viewModel.onEvent(TaskScreenEvent.OnAddFileBtnClicked) }
             ) {
-                Text("Add file(s)")
+                Text("Add files")
             }
         }
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(min(400, uiState.taskFiles.size * 100).dp)
+                .heightIn(max = 400.dp)
         ) {
             items(uiState.taskFiles) {
                 FileElement(
@@ -279,7 +282,6 @@ private fun FileElement(
         modifier = modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .height(80.dp)
             .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -295,19 +297,13 @@ private fun FileElement(
                 .basicMarquee(),
             text = "$fileName"
         )
-        Canvas(
-            modifier = Modifier
+        ShowAvailableStatus(
+            Modifier
                 .weight(0.1f)
                 .padding(2.dp)
-                .fillMaxSize(0.8f)
-        ) {
-            val color = when (file.availableStatus) {
-                AvailableStatus.EDITING -> Color.Gray
-                AvailableStatus.OFFLINE -> Color.Yellow
-                AvailableStatus.OFFLINE_AND_ONLINE -> Color.Green
-            }
-            drawCircle(color, style = Fill)
-        }
+                .fillMaxSize(0.8f),
+            file.availableStatus
+        )
         Box(modifier = Modifier
             .weight(0.1f)
             .padding(2.dp)
@@ -321,6 +317,23 @@ private fun FileElement(
                 tint = MaterialTheme.colorScheme.error
             )
         }
+    }
+}
+
+@Composable
+private fun ShowAvailableStatus(
+    modifier: Modifier,
+    status: AvailableStatus
+) {
+    Canvas(
+        modifier = modifier
+    ) {
+        val color = when (status) {
+            AvailableStatus.EDITING -> Color.Gray
+            AvailableStatus.OFFLINE -> Color.Yellow
+            AvailableStatus.OFFLINE_AND_ONLINE -> Color.Green
+        }
+        drawCircle(color, style = Fill)
     }
 }
 

@@ -2,8 +2,10 @@ package com.example.reachyourgoal.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.reachyourgoal.presentation.screen.auth.loginScreen.LoginScreen
 import com.example.reachyourgoal.presentation.screen.auth.userDetailsScreen.UserDetailsScreen
 import com.example.reachyourgoal.presentation.screen.mainScreen.MainScreen
@@ -30,8 +32,17 @@ fun SetupNavGraph(navHostController: NavHostController) {
             MainScreen(navHostController)
         }
 
-        composable(route = "${Screen.TaskScreen.route}") {
-            TaskScreen(navHostController)
+        composable(
+            route = Screen.TaskScreen.route,
+            arguments = listOf(
+                navArgument("taskId") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backstackEntry ->
+            val taskId = backstackEntry.arguments?.getString("taskId")
+            TaskScreen(navHostController, taskId)
         }
     }
 
