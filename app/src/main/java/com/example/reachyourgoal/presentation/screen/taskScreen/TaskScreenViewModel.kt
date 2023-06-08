@@ -65,6 +65,7 @@ class TaskScreenViewModel @Inject constructor(
             is TaskScreenEvent.OnTaskDescriptionChanged -> onTaskDescriptionChanged(event.taskDescription)
             is TaskScreenEvent.OnFilesAdded -> onFilesAdded(event.fileUris)
             is TaskScreenEvent.OnFileDeleted -> onFileDeleted(event.file)
+            is TaskScreenEvent.OnTaskEditing -> setTaskId(event.taskId)
             TaskScreenEvent.OnCloseBtnClicked -> onCloseBtnClicked()
             TaskScreenEvent.OnSaveBtnClicked -> onSaveBtnClicked()
             TaskScreenEvent.OnDeleteAllFilesBtnClicked -> onDeleteAllFilesBtnClicked()
@@ -75,10 +76,6 @@ class TaskScreenViewModel @Inject constructor(
     private fun setTaskId(taskId: UUID) {
         this.taskId = taskId
         loadTask()
-    }
-
-    fun setTaskId(taskId: String) {
-        setTaskId(UUID.fromString(taskId))
     }
 
     private fun onTaskNameChanged(taskName: String) {

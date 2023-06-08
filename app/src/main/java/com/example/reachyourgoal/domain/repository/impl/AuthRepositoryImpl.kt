@@ -82,4 +82,6 @@ class AuthRepositoryImpl @Inject constructor(
         }
         emit(Result.success(Unit))
     }
+
+    override fun getEmail() = auth.currentUser!!.email!!
 }

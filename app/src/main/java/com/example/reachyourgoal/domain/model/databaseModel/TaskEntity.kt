@@ -13,5 +13,7 @@ data class TaskEntity(
     val name: String,
     val description: String,
     @ColumnInfo(name = "is_on_server")
-    val isOnServer: Boolean
+    val isOnServer: Boolean,
+//    @ColumnInfo(name = "updated_time")
+//    val updatedTime : Long = 0L
 )

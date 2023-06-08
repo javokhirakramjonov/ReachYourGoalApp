@@ -1,6 +1,7 @@
 package com.example.reachyourgoal.domain.repository
 
 import com.example.reachyourgoal.domain.model.databaseModel.TaskAndFileModel
+import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
 import kotlinx.coroutines.flow.Flow
@@ -14,4 +15,7 @@ interface TaskRepository {
 
     suspend fun getTask(taskId: UUID): Flow<TaskAndFileModel>
 
+    suspend fun loadTasksFromServer()
+
+    fun getAllTasks() : Flow<List<TaskEntity>>
 }

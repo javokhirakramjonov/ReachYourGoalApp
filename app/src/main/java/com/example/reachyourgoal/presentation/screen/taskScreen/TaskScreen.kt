@@ -67,12 +67,13 @@ import com.example.reachyourgoal.util.getFileExtensionFromUri
 import com.example.reachyourgoal.util.getFileNameFromUri
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
     navHostController: NavHostController,
-    taskId: String?,
+    taskId: UUID?,
     viewModel: TaskScreenViewModel = hiltViewModel()
 ) {
 
@@ -81,7 +82,7 @@ fun TaskScreen(
 
     LaunchedEffect(true) {
         taskId?.let {
-            viewModel.setTaskId(it)
+            viewModel.onEvent(TaskScreenEvent.OnTaskEditing(it))
         }
 
         viewModel.uiEffect.collectLatest { effect ->
@@ -147,7 +148,9 @@ fun TaskScreen(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 SelectedFiles(
-                    modifier = modifierForColumnElements, viewModel = viewModel, uiState = uiState
+                    modifier = modifierForColumnElements.weight(1f, false),
+                    viewModel = viewModel,
+                    uiState = uiState
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Row(

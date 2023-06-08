@@ -3,8 +3,10 @@ package com.example.reachyourgoal.domain.repository.impl
 import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
+import com.example.reachyourgoal.domain.model.local.AvailableStatus
 import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.model.remote.FirestoreTaskModel
+import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.domain.repository.TaskRepository
 import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
 import com.example.reachyourgoal.service.NetworkStatusService
@@ -13,21 +15,27 @@ import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
 import com.example.reachyourgoal.util.getErrorMessageOrDefault
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.ktx.storage
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
+    private val authRepository: AuthRepository,
     private val networkStatusService: NetworkStatusService,
     private val firebaseFileUploader: FirebaseFileUploader,
     private val taskDao: TaskDao
 ) : TaskRepository {
 
     private val fireStore = Firebase.firestore
+    private val storage = Firebase.storage.reference
 
     companion object {
         private const val TASK_COLLECTION = "tasks"
+        const val TASK_FILE_COLLECTION = "task_files"
     }
 
     override fun createTask(task: TaskModel) = flow {
@@ -89,7 +97,14 @@ class TaskRepositoryImpl @Inject constructor(
             fireStore
                 .collection(TASK_COLLECTION)
                 .document(taskId.toString())
-                .set(FirestoreTaskModel(taskId, task.name, task.description))
+                .set(
+                    FirestoreTaskModel(
+                        authRepository.getEmail(),
+                        taskId,
+                        task.name,
+                        task.description
+                    )
+                )
                 .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
@@ -102,7 +117,8 @@ class TaskRepositoryImpl @Inject constructor(
         taskDao.updateTask(
             taskEntity.copy(
                 name = task.name,
-                description = task.description
+                description = task.description,
+                isOnServer = false
             )
         )
 
@@ -131,5 +147,38 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFileFlow(taskId)
+
+    override suspend fun loadTasksFromServer() {
+        if (!networkStatusService.isInternetAvailable()) {
+            throw Exception(INTERNET_IS_NOT_AVAILABLE)
+        }
+
+        val resultTask = runCatching {
+            fireStore
+                .collection(TASK_COLLECTION)
+                .whereEqualTo("email", authRepository.getEmail())
+                .get()
+                .await()
+        }.getOrElse {
+            throw Exception(getErrorMessageOrDefault(it))
+        }
+
+        resultTask
+            .map {
+                with(it.toObject(FirestoreTaskModel::class.java)) {
+                    TaskEntity(taskId, name, description, true)
+                }
+            }
+            .forEach {
+                //TODO update if it is newer than in local
+                taskDao.insertTask(it)
+            }
+
+        //TODO download task files
+    }
+
+    override fun getAllTasks(): Flow<List<TaskEntity>> {
+        return taskDao.getTasksFlow()
+    }
 
 }

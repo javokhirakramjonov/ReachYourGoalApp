@@ -11,11 +11,13 @@ import com.example.reachyourgoal.presentation.screen.auth.userDetailsScreen.User
 import com.example.reachyourgoal.presentation.screen.mainScreen.MainScreen
 import com.example.reachyourgoal.presentation.screen.splashScreen.SplashScreen
 import com.example.reachyourgoal.presentation.screen.taskScreen.TaskScreen
+import com.example.reachyourgoal.presentation.screen.tasksScreen.TasksScreen
+import java.util.UUID
 
 @Composable
 fun SetupNavGraph(navHostController: NavHostController) {
 
-    NavHost(navController = navHostController, startDestination = Screen.TaskScreen.route) {
+    NavHost(navController = navHostController, startDestination = Screen.TasksScreen.route) {
         composable(route = Screen.Splash.route) {
             SplashScreen(navHostController)
         }
@@ -41,8 +43,13 @@ fun SetupNavGraph(navHostController: NavHostController) {
                 }
             )
         ) { backstackEntry ->
-            val taskId = backstackEntry.arguments?.getString("taskId")
+            val taskIdArgument = backstackEntry.arguments?.getString("taskId")
+            val taskId = taskIdArgument?.let{ UUID.fromString(it) }
             TaskScreen(navHostController, taskId)
+        }
+
+        composable(route = Screen.TasksScreen.route) {
+            TasksScreen(navHostController = navHostController)
         }
     }
 

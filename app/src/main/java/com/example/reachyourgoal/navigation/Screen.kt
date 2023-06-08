@@ -10,5 +10,7 @@ sealed class Screen(val route: String) {
 
     object MainScreen : Screen("main_screen")
 
-    object TaskScreen : Screen("create_task_screen")
+    object TaskScreen : Screen("task_screen")
+
+    object TasksScreen : Screen("tasks_screen")
 }

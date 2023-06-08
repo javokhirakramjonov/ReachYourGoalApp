@@ -57,4 +57,12 @@ interface TaskDao {
 
     @Delete
     suspend fun deleteTaskFile(taskFileEntity: TaskFileEntity)
+
+    //Exists
+
+    @Query("SELECT EXISTS (SELECT 1 FROM task_files WHERE task_file_id = :taskFileId)")
+    suspend fun fileExists(taskFileId: UUID): Boolean
+
+    @Query("SELECT EXISTS (SELECT 1 FROM tasks WHERE task_id = :taskId)")
+    suspend fun taskExists(taskId: UUID) : Boolean
 }

@@ -7,6 +7,8 @@ import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
 import com.example.reachyourgoal.domain.model.remote.FirestoreTaskFileModel
+import com.example.reachyourgoal.domain.repository.AuthRepository
+import com.example.reachyourgoal.domain.repository.impl.TaskRepositoryImpl.Companion.TASK_FILE_COLLECTION
 import com.example.reachyourgoal.service.FirebaseFileUploadService
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -23,13 +25,15 @@ import java.util.UUID
 import javax.inject.Inject
 
 class FirebaseFileUploaderImpl @Inject constructor(
+    private val authRepository: AuthRepository,
     private val taskDao: TaskDao,
     @ApplicationContext private val context: Context,
 ) : FirebaseFileUploader {
 
+
+
     companion object {
         private const val FILE_DIR = "task_files"
-        private const val TASK_FILE_COLLECTION = "task_files"
     }
 
     private val firestore = Firebase.firestore
@@ -114,7 +118,7 @@ class FirebaseFileUploaderImpl @Inject constructor(
             firestore
                 .collection(TASK_FILE_COLLECTION)
                 .document(taskFileId.toString())
-                .set(FirestoreTaskFileModel(taskFileEntity.taskId, taskFileId, taskFileUrl))
+                .set(FirestoreTaskFileModel(authRepository.getEmail(), taskFileEntity.taskId, taskFileId, taskFileUrl))
                 .await()
         }
         if (result.isSuccess) {
