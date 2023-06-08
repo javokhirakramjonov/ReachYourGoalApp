@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.service
+package com.example.reachyourgoal.service.firebaseFileUploader
 
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import kotlinx.coroutines.flow.Flow

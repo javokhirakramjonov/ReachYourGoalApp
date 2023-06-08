@@ -7,8 +7,8 @@ import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.model.remote.FirestoreTaskModel
 import com.example.reachyourgoal.domain.repository.TaskRepository
 import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
-import com.example.reachyourgoal.service.FirebaseFileUploader
 import com.example.reachyourgoal.service.NetworkStatusService
+import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
 import com.example.reachyourgoal.util.getErrorMessageOrDefault
 import com.google.firebase.firestore.ktx.firestore
