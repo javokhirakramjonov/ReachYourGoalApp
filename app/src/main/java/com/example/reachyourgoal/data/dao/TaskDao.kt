@@ -64,5 +64,5 @@ interface TaskDao {
     suspend fun fileExists(taskFileId: UUID): Boolean
 
     @Query("SELECT EXISTS (SELECT 1 FROM tasks WHERE task_id = :taskId)")
-    suspend fun taskExists(taskId: UUID) : Boolean
+    suspend fun taskExists(taskId: UUID): Boolean
 }

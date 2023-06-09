@@ -8,17 +8,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import com.example.reachyourgoal.navigation.Screen
-import com.example.reachyourgoal.ui.common.navigateWithPopUp
+import com.example.reachyourgoal.presentation.screen.destinations.SplashScreenDestination
+import com.example.reachyourgoal.presentation.screen.destinations.TasksScreenDestination
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootNavGraph
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.delay
 
+@RootNavGraph(start = true)
+@Destination
 @Composable
-fun SplashScreen(navHostController: NavHostController) {
+fun SplashScreen(
+    navigator: DestinationsNavigator,
+) {
 
     LaunchedEffect(true) {
         delay(2000)
-        navHostController.navigateWithPopUp(Screen.LoginScreen.route, Screen.Splash.route)
+        navigator.navigate(TasksScreenDestination()) {
+            popUpTo(SplashScreenDestination.route) {
+                inclusive = true
+            }
+        }
     }
 
     Surface {

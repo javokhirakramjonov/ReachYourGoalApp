@@ -43,6 +43,7 @@ class TasksScreenViewModel @Inject constructor(
                     _uiEffect.emit(TasksScreenEffect.OpenTask(event.taskId))
                 }
             }
+
             TasksScreenEvent.OnLoadTasks -> onLoadTasks()
             TasksScreenEvent.OnCreateTaskBtnClicked -> TODO()
         }

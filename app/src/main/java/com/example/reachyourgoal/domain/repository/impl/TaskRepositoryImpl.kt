@@ -3,7 +3,6 @@ package com.example.reachyourgoal.domain.repository.impl
 import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
-import com.example.reachyourgoal.domain.model.local.AvailableStatus
 import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.model.remote.FirestoreTaskModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
@@ -18,7 +17,6 @@ import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject

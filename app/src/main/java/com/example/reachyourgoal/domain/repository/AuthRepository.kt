@@ -7,5 +7,5 @@ import kotlinx.coroutines.flow.Flow
 interface AuthRepository {
     fun loginOrRegister(email: String, password: String): Flow<LoginResult>
     fun saveUserDetails(userModel: UserModel): Flow<Result<Unit>>
-    fun getEmail() : String
+    fun getEmail(): String
 }

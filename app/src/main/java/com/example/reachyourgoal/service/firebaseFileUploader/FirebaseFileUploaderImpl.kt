@@ -31,7 +31,6 @@ class FirebaseFileUploaderImpl @Inject constructor(
 ) : FirebaseFileUploader {
 
 
-
     companion object {
         private const val FILE_DIR = "task_files"
     }
@@ -118,7 +117,14 @@ class FirebaseFileUploaderImpl @Inject constructor(
             firestore
                 .collection(TASK_FILE_COLLECTION)
                 .document(taskFileId.toString())
-                .set(FirestoreTaskFileModel(authRepository.getEmail(), taskFileEntity.taskId, taskFileId, taskFileUrl))
+                .set(
+                    FirestoreTaskFileModel(
+                        authRepository.getEmail(),
+                        taskFileEntity.taskId,
+                        taskFileId,
+                        taskFileUrl
+                    )
+                )
                 .await()
         }
         if (result.isSuccess) {

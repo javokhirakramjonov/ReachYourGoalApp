@@ -29,19 +29,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import com.example.reachyourgoal.navigation.Screen
+import com.example.reachyourgoal.presentation.screen.destinations.LoginScreenDestination
+import com.example.reachyourgoal.presentation.screen.destinations.MainScreenDestination
+import com.example.reachyourgoal.presentation.screen.destinations.UserDetailsScreenDestination
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
 import com.example.reachyourgoal.ui.common.ShowLoading
 import com.example.reachyourgoal.ui.common.SnackBarStyles
-import com.example.reachyourgoal.ui.common.navigateWithPopUp
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    navHostController: NavHostController,
+    navigator: DestinationsNavigator,
     viewModel: LoginScreenViewModel = hiltViewModel()
 ) {
 
@@ -64,14 +67,15 @@ fun LoginScreen(
                 }
 
                 LoginScreenEffect.NavigateToMainScreen -> {
-                    navHostController.navigateWithPopUp(
-                        Screen.MainScreen.route,
-                        Screen.LoginScreen.route
-                    )
+                    navigator.navigate(MainScreenDestination()) {
+                        popUpTo(LoginScreenDestination.route) {
+                            inclusive = true
+                        }
+                    }
                 }
 
                 LoginScreenEffect.NavigateToUserDetailsScreen -> {
-                    navHostController.navigate(Screen.UserDetailsScreen.route)
+                    navigator.navigate(UserDetailsScreenDestination())
                 }
             }
         }

@@ -17,5 +17,5 @@ interface TaskRepository {
 
     suspend fun loadTasksFromServer()
 
-    fun getAllTasks() : Flow<List<TaskEntity>>
+    fun getAllTasks(): Flow<List<TaskEntity>>
 }

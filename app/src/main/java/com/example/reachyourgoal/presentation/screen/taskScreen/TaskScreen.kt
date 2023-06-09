@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.example.reachyourgoal.domain.model.local.AvailableStatus
 import com.example.reachyourgoal.domain.model.local.TaskFileModel
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
@@ -65,14 +64,17 @@ import com.example.reachyourgoal.ui.common.SnackBarStyles
 import com.example.reachyourgoal.ui.common.getFileIcon
 import com.example.reachyourgoal.util.getFileExtensionFromUri
 import com.example.reachyourgoal.util.getFileNameFromUri
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 import java.util.UUID
 
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreen(
-    navHostController: NavHostController,
+    navigator: DestinationsNavigator,
     taskId: UUID?,
     viewModel: TaskScreenViewModel = hiltViewModel()
 ) {
@@ -87,7 +89,9 @@ fun TaskScreen(
 
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
-                TaskScreenEffect.CloseScreen -> navHostController.popBackStack()
+                TaskScreenEffect.CloseScreen -> {
+                    navigator.popBackStack()
+                }
 
                 is TaskScreenEffect.ShowErrorMessage -> snackBarHostState.showSnackbar(
                     SnackBarStyles.ErrorSnackBar(effect.errorMessage)

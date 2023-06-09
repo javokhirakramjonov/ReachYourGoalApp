@@ -44,21 +44,24 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.example.reachyourgoal.domain.model.local.Sex
-import com.example.reachyourgoal.navigation.Screen
+import com.example.reachyourgoal.presentation.screen.destinations.MainScreenDestination
+import com.example.reachyourgoal.presentation.screen.destinations.UserDetailsScreenDestination
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
 import com.example.reachyourgoal.ui.common.ShowLoading
 import com.example.reachyourgoal.ui.common.SnackBarStyles
-import com.example.reachyourgoal.ui.common.navigateWithPopUp
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailsScreen(
-    navHostController: NavHostController, viewModel: UserDetailsScreenViewModel = hiltViewModel()
+    navigator: DestinationsNavigator,
+    viewModel: UserDetailsScreenViewModel = hiltViewModel()
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
@@ -73,13 +76,15 @@ fun UserDetailsScreen(
         viewModel.uiEffect.collectLatest { effect ->
             when (effect) {
                 UserDetailsScreenEffect.NavigateBack -> {
-                    navHostController.popBackStack()
+                    navigator.popBackStack()
                 }
 
                 UserDetailsScreenEffect.NavigateToMainScreen -> {
-                    navHostController.navigateWithPopUp(
-                        Screen.MainScreen.route, Screen.UserDetailsScreen.route
-                    )
+                    navigator.navigate(MainScreenDestination()) {
+                        popUpTo(UserDetailsScreenDestination.route) {
+                            inclusive = true
+                        }
+                    }
                 }
 
                 is UserDetailsScreenEffect.ShowErrorMessage -> {

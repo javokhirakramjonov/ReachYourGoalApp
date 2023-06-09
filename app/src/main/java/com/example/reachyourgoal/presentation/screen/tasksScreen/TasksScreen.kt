@@ -17,15 +17,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
-import com.example.reachyourgoal.navigation.Screen
+import com.example.reachyourgoal.presentation.screen.destinations.TaskScreenDestination
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
-    navHostController: NavHostController,
+    navigator: DestinationsNavigator,
     viewModel: TasksScreenViewModel = hiltViewModel()
 ) {
 
@@ -37,9 +39,9 @@ fun TasksScreen(
         viewModel.uiEffect.collectLatest {
             when (it) {
                 is TasksScreenEffect.OpenTask -> {
-                    val argument = it.taskId?.let { id -> "/taskId=$id" } ?: ""
-                    navHostController.navigate("${Screen.TaskScreen.route}$argument")
+                    navigator.navigate(TaskScreenDestination(it.taskId))
                 }
+
                 is TasksScreenEffect.ShowDeleteTaskConfirmDialog -> TODO()
                 is TasksScreenEffect.ShowErrorMessage -> TODO()
                 is TasksScreenEffect.ShowSuccessMessage -> TODO()
