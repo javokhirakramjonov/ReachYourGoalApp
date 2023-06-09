@@ -20,11 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Close
@@ -50,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -112,14 +111,10 @@ fun TaskScreen(
         .fillMaxWidth()
         .padding(top = 4.dp, start = 14.dp, end = 14.dp)
 
-    val scrollState = rememberScrollState()
-
     Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) {
         Surface(modifier = Modifier.padding(it)) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
+                modifier = Modifier.fillMaxSize()
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
@@ -130,12 +125,14 @@ fun TaskScreen(
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                ShowAvailableStatus(
-                    modifier = Modifier
-                        .padding(start = 14.dp)
-                        .size(24.dp),
-                    status = uiState.availableStatus
-                )
+                Box(
+                    modifier = Modifier.padding(start = 14.dp)
+                ) {
+                    ShowAvailableStatus(
+                        24.dp,
+                        status = uiState.availableStatus
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 TaskNameInput(
                     modifier = modifierForColumnElements, viewModel = viewModel, uiState = uiState
@@ -304,13 +301,16 @@ private fun FileElement(
                 .basicMarquee(),
             text = "$fileName"
         )
-        ShowAvailableStatus(
+        Box(
             Modifier
                 .weight(0.1f)
                 .padding(2.dp)
-                .fillMaxSize(0.8f),
-            file.availableStatus
-        )
+        ) {
+            ShowAvailableStatus(
+                12.dp,
+                file.availableStatus
+            )
+        }
         Box(modifier = Modifier
             .weight(0.1f)
             .padding(2.dp)
@@ -329,11 +329,11 @@ private fun FileElement(
 
 @Composable
 private fun ShowAvailableStatus(
-    modifier: Modifier,
+    size: Dp,
     status: AvailableStatus
 ) {
     Canvas(
-        modifier = modifier
+        modifier = Modifier.size(size)
     ) {
         val color = when (status) {
             AvailableStatus.EDITING -> Color.Gray

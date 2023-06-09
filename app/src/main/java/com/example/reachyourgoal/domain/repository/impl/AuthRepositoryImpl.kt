@@ -31,22 +31,32 @@ class AuthRepositoryImpl @Inject constructor(
         }
 
         val signInMethods = runCatching {
-            auth.fetchSignInMethodsForEmail(email).await()
+            auth
+                .fetchSignInMethodsForEmail(email)
+                .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }.signInMethods
 
         runCatching {
             if (signInMethods.isNullOrEmpty())
-                auth.createUserWithEmailAndPassword(email, password).await()
+                auth
+                    .createUserWithEmailAndPassword(email, password)
+                    .await()
             else
-                auth.signInWithEmailAndPassword(email, password).await()
+                auth
+                    .signInWithEmailAndPassword(email, password)
+                    .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }
 
         val userDetailsResult = runCatching {
-            firestore.collection(COLLECTION_USER).document(email).get().await()
+            firestore
+                .collection(COLLECTION_USER)
+                .document(email)
+                .get()
+                .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }
@@ -61,22 +71,28 @@ class AuthRepositoryImpl @Inject constructor(
         if (!networkStatusService.isInternetAvailable()) {
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
-        //Always coming here after sign in
-        val email = auth.currentUser!!.email!!
 
         val imageUrl = userModel.imageUri?.runCatching {
-            firebaseStorage.child(email).putFile(this).await()
+            firebaseStorage
+                .child(getEmail())
+                .putFile(this)
+                .await()
         }?.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }?.runCatching {
-            storage.downloadUrl.await()
+            storage
+                .downloadUrl
+                .await()
         }?.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }
 
         runCatching {
-            firestore.collection(COLLECTION_USER).document(email)
-                .set(userModel.copy(imageUri = imageUrl)).await()
+            firestore
+                .collection(COLLECTION_USER)
+                .document(getEmail())
+                .set(userModel.copy(imageUri = imageUrl))
+                .await()
         }.getOrElse {
             throw Exception(getErrorMessageOrDefault(it))
         }

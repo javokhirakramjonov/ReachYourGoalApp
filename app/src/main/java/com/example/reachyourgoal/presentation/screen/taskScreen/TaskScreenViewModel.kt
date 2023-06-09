@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
-import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 import com.example.reachyourgoal.domain.model.local.AvailableStatus
 import com.example.reachyourgoal.domain.model.local.TaskFileModel
 import com.example.reachyourgoal.domain.model.local.TaskModel
@@ -80,13 +79,21 @@ class TaskScreenViewModel @Inject constructor(
 
     private fun onTaskNameChanged(taskName: String) {
         _uiState.update { state ->
-            state.copy(taskName = taskName, taskNameError = null)
+            state.copy(
+                taskName = taskName,
+                taskNameError = null,
+                availableStatus = AvailableStatus.EDITING
+            )
         }
     }
 
     private fun onTaskDescriptionChanged(taskDescription: String) {
         _uiState.update { state ->
-            state.copy(taskDescription = taskDescription)
+            state.copy(
+                taskDescription = taskDescription,
+                taskDescriptionError = null,
+                availableStatus = AvailableStatus.EDITING
+            )
         }
     }
 
@@ -100,7 +107,8 @@ class TaskScreenViewModel @Inject constructor(
             }
             state.copy(
                 taskFiles = fileUrisAndOnServerStatuses,
-                isFilesBeingSelected = false
+                isFilesBeingSelected = false,
+                availableStatus = AvailableStatus.EDITING
             )
         }
     }
@@ -109,7 +117,10 @@ class TaskScreenViewModel @Inject constructor(
         _uiState.update { state ->
             val fileUrisAndOnServerStatuses = state.taskFiles.toMutableList()
             fileUrisAndOnServerStatuses.remove(file)
-            state.copy(taskFiles = fileUrisAndOnServerStatuses)
+            state.copy(
+                taskFiles = fileUrisAndOnServerStatuses,
+                availableStatus = AvailableStatus.EDITING
+            )
         }
     }
 
@@ -187,38 +198,27 @@ class TaskScreenViewModel @Inject constructor(
                     .onEach { taskAndFileModel ->
                         _uiState.update { state ->
                             state.copy(
+                                taskName = taskAndFileModel.task.name,
+                                taskDescription = taskAndFileModel.task.description,
                                 availableStatus = if (taskAndFileModel.task.isOnServer)
                                     AvailableStatus.OFFLINE_AND_ONLINE
                                 else
                                     AvailableStatus.OFFLINE,
-                                taskFiles = mergeUiFileAndDbFiles(
-                                    state.taskFiles,
-                                    taskAndFileModel.files
-                                )
+                                taskFiles = taskAndFileModel.files.map {
+                                    TaskFileModel(
+                                        Uri.parse(it.fileUri),
+                                        if (it.isOnServer)
+                                            AvailableStatus.OFFLINE_AND_ONLINE
+                                        else
+                                            AvailableStatus.OFFLINE
+                                    )
+                                }
                             )
                         }
                     }
                     .collect()
             }
         }
-    }
-
-    private fun mergeUiFileAndDbFiles(
-        uiList: List<TaskFileModel>,
-        dbList: List<TaskFileEntity>
-    ): List<TaskFileModel> {
-        val uiFileMap = uiList.associateBy { it.uri.toString() }.toMutableMap()
-        dbList.forEach { fileInDb ->
-            uiFileMap[fileInDb.fileUri]?.within {
-                uiFileMap[fileInDb.fileUri] = copy(
-                    availableStatus = if (fileInDb.isOnServer)
-                        AvailableStatus.OFFLINE_AND_ONLINE
-                    else
-                        AvailableStatus.OFFLINE
-                )
-            }
-        }
-        return uiList.map { uiFileMap[it.uri.toString()]!! }
     }
 
     private fun validateTaskName() {
