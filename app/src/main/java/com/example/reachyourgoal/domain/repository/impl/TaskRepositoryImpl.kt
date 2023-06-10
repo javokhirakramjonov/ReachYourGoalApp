@@ -12,11 +12,14 @@ import com.example.reachyourgoal.service.NetworkStatusService
 import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
 import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
 import com.example.reachyourgoal.util.getErrorMessageOrDefault
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
-import com.google.firebase.storage.ktx.storage
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
@@ -28,8 +31,16 @@ class TaskRepositoryImpl @Inject constructor(
     private val taskDao: TaskDao
 ) : TaskRepository {
 
+    init {
+        CoroutineScope(Dispatchers.IO).launch {
+            Firebase.auth.signInWithEmailAndPassword(
+                "javokhirakromjonov@gmail.com",
+                "javokhirakromjonov@gmail.com"
+            ).await()
+        }
+    }
+
     private val fireStore = Firebase.firestore
-    private val storage = Firebase.storage.reference
 
     companion object {
         private const val TASK_COLLECTION = "tasks"
@@ -66,6 +77,10 @@ class TaskRepositoryImpl @Inject constructor(
         taskDao.updateTaskOnServerStatus(taskId, true)
 
         firebaseFileUploader.uploadFiles(taskId)
+    }
+
+    override suspend fun deleteTask(taskId: UUID) {
+        taskDao.deleteTask(taskId)
     }
 
     private suspend fun createTaskInDatabase(task: TaskModel): TaskEntity {
@@ -175,8 +190,8 @@ class TaskRepositoryImpl @Inject constructor(
         //TODO download task files
     }
 
-    override fun getAllTasks(): Flow<List<TaskEntity>> {
-        return taskDao.getTasksFlow()
-    }
+    override fun getAllTasksAndFiles() = taskDao
+        .getTasksFlow()
+        .map { taskList -> taskList.map { task -> taskDao.getTaskAndFile(task.id) } }
 
 }

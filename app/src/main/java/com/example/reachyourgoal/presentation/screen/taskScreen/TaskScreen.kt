@@ -1,6 +1,5 @@
 package com.example.reachyourgoal.presentation.screen.taskScreen
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,13 +40,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
@@ -58,6 +53,7 @@ import com.example.reachyourgoal.domain.model.local.TaskFileModel
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
 import com.example.reachyourgoal.ui.common.FilePicker
+import com.example.reachyourgoal.ui.common.ShowAvailableStatus
 import com.example.reachyourgoal.ui.common.ShowLoading
 import com.example.reachyourgoal.ui.common.SnackBarStyles
 import com.example.reachyourgoal.ui.common.getFileIcon
@@ -324,23 +320,6 @@ private fun FileElement(
                 tint = MaterialTheme.colorScheme.error
             )
         }
-    }
-}
-
-@Composable
-private fun ShowAvailableStatus(
-    size: Dp,
-    status: AvailableStatus
-) {
-    Canvas(
-        modifier = Modifier.size(size)
-    ) {
-        val color = when (status) {
-            AvailableStatus.EDITING -> Color.Gray
-            AvailableStatus.OFFLINE -> Color.Yellow
-            AvailableStatus.OFFLINE_AND_ONLINE -> Color.Green
-        }
-        drawCircle(color, style = Fill)
     }
 }
 

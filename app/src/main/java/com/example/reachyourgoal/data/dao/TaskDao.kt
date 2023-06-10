@@ -47,6 +47,10 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE task_id = :taskId")
     fun getTaskAndFileFlow(taskId: UUID): Flow<TaskAndFileModel>
 
+    @Transaction
+    @Query("SELECT * FROM tasks WHERE task_id = :taskId")
+    suspend fun getTaskAndFile(taskId: UUID): TaskAndFileModel
+
     @Query("SELECT * FROM task_files WHERE task_id = :taskId")
     suspend fun getTaskFilesByTaskId(taskId: UUID): List<TaskFileEntity>
 
@@ -58,11 +62,13 @@ interface TaskDao {
     @Delete
     suspend fun deleteTaskFile(taskFileEntity: TaskFileEntity)
 
+    @Query("DELETE FROM tasks WHERE task_id = :taskId")
+    suspend fun deleteTask(taskId: UUID)
+
     //Exists
 
     @Query("SELECT EXISTS (SELECT 1 FROM task_files WHERE task_file_id = :taskFileId)")
     suspend fun fileExists(taskFileId: UUID): Boolean
-
     @Query("SELECT EXISTS (SELECT 1 FROM tasks WHERE task_id = :taskId)")
     suspend fun taskExists(taskId: UUID): Boolean
 }

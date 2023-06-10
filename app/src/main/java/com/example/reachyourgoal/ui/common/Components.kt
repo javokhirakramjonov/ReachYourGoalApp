@@ -1,5 +1,7 @@
 package com.example.reachyourgoal.ui.common
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Archive
@@ -16,7 +18,12 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
+import com.example.reachyourgoal.domain.model.local.AvailableStatus
 
 @Composable
 fun getFileIcon(extension: String?): ImageVector {
@@ -130,5 +137,38 @@ fun getFileIcon(extension: String?): ImageVector {
         "tar" -> Icons.Filled.Archive
         "tif", "tiff" -> Icons.Filled.Image
         else -> Icons.Filled.Description
+    }
+}
+
+@Composable
+fun ShowAvailableStatus(
+    iconSize: Dp, status: AvailableStatus
+) {
+
+    val (leftColor, rightColor) = when (status) {
+        AvailableStatus.EDITING -> Pair(Color.Gray, Color.Gray)
+        AvailableStatus.OFFLINE -> Pair(Color.Yellow, Color.Yellow)
+        AvailableStatus.PARTIAL -> Pair(Color.Gray, Color.Green)
+        AvailableStatus.OFFLINE_AND_ONLINE -> Pair(Color.Green, Color.Green)
+    }
+
+    Canvas(modifier = Modifier.size(iconSize)) {
+        val radius = size.minDimension / 2f
+
+        drawArc(
+            color = leftColor,
+            startAngle = 90f,
+            sweepAngle = 180f,
+            useCenter = true,
+            size = Size(radius * 2, radius * 2)
+        )
+
+        drawArc(
+            color = rightColor,
+            startAngle = -90f,
+            sweepAngle = 180f,
+            useCenter = true,
+            size = Size(radius * 2, radius * 2)
+        )
     }
 }

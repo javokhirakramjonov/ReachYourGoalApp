@@ -36,8 +36,11 @@ class TasksScreenViewModel @Inject constructor(
 
     override fun onEvent(event: TasksScreenEvent) {
         when (event) {
-            is TasksScreenEvent.OnDeleteTask -> TODO()
-            is TasksScreenEvent.OnDeleteTaskConfirmed -> TODO()
+            is TasksScreenEvent.OnDeleteTask -> {
+                viewModelScope.launch {
+                    tasksRepository.deleteTask(event.taskId)
+                }
+            }
             is TasksScreenEvent.OnOpenTask -> {
                 viewModelScope.launch {
                     _uiEffect.emit(TasksScreenEffect.OpenTask(event.taskId))
@@ -45,7 +48,11 @@ class TasksScreenViewModel @Inject constructor(
             }
 
             TasksScreenEvent.OnLoadTasks -> onLoadTasks()
-            TasksScreenEvent.OnCreateTaskBtnClicked -> TODO()
+            TasksScreenEvent.OnCreateTaskBtnClicked -> {
+                viewModelScope.launch {
+                    _uiEffect.emit(TasksScreenEffect.OpenTask(null))
+                }
+            }
         }
     }
 
@@ -57,11 +64,11 @@ class TasksScreenViewModel @Inject constructor(
                 e.message?.let { _uiEffect.emit(TasksScreenEffect.ShowErrorMessage(it)) }
             }
             tasksRepository
-                .getAllTasks()
-                .onEach {
+                .getAllTasksAndFiles()
+                .onEach { taskAndFileModel ->
                     _uiState.update { state ->
                         state.copy(
-                            tasks = it
+                            tasks = taskAndFileModel.sortedByDescending { it.task.updatedTime }
                         )
                     }
                 }

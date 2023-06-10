@@ -14,6 +14,6 @@ data class TaskEntity(
     val description: String,
     @ColumnInfo(name = "is_on_server")
     val isOnServer: Boolean,
-//    @ColumnInfo(name = "updated_time")
-//    val updatedTime : Long = 0L
+    @ColumnInfo(name = "updated_time")
+    val updatedTime: String = ""
 )
