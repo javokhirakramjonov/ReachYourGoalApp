@@ -54,7 +54,7 @@ object Validators {
     }
 
     fun taskNameValidator(taskName: String): String? {
-        return if ("^[a-zA-Z0-9][a-zA-Z0-9\\s]{5,49}$".toRegex().matches(taskName))
+        return if ("^[a-zA-Z0-9][a-zA-Z0-9\\s]{0,49}$".toRegex().matches(taskName))
             null
         else
             generateFormattedErrorMessage(
