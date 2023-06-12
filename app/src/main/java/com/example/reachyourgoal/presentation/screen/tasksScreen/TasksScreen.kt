@@ -125,7 +125,7 @@ fun TasksScreen(
                 state = listState,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                items(uiState.tasks) { item ->
+                items(uiState.tasks, key = { taskItem -> taskItem.task.id }) { item ->
                     TaskItem(
                         parentY = listY,
                         parentHeight = listHeight,
@@ -183,7 +183,7 @@ private fun TaskItem(
             }
             .fillMaxWidth()
             .height(itemHeight)
-            .pointerInput(Unit) {
+            .pointerInput(taskItem.task.id) {
                 detectTapGestures(
                     onTap = {
                         onSelect()
