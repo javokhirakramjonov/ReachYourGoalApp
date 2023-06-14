@@ -48,13 +48,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.reachyourgoal.domain.model.databaseModel.TaskAndFileModel
+import com.example.reachyourgoal.domain.model.databaseModel.TaskAndFileEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
-import com.example.reachyourgoal.domain.model.local.AvailableStatus
 import com.example.reachyourgoal.presentation.screen.destinations.TaskScreenDestination
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
-import com.example.reachyourgoal.ui.common.ShowAvailableStatus
 import com.example.reachyourgoal.ui.common.SnackBarStyles
 import com.example.reachyourgoal.ui.common.dpToPx
 import com.ramcosta.composedestinations.annotation.Destination
@@ -144,7 +142,7 @@ fun TasksScreen(
 private fun TaskItem(
     parentY: Float,
     parentHeight: Int,
-    taskItem: TaskAndFileModel,
+    taskItem: TaskAndFileEntity,
     onSelect: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -155,13 +153,12 @@ private fun TaskItem(
 
     var brush by remember { mutableStateOf(Brush.verticalGradient(colors, 0f, 0f)) }
 
-    val itemHeight = 50.dp
+    val itemHeight = 70.dp
     val itemHeightPx = itemHeight.dpToPx()
 
     Card(
         modifier = Modifier
-            .padding(horizontal = 10.dp)
-            .padding(top = 4.dp, bottom = 8.dp)
+            .padding(10.dp)
             .onGloballyPositioned { coordinate ->
 
                 val startY = coordinate.localToRoot(Offset.Zero).y
@@ -210,47 +207,28 @@ private fun TaskItem(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = taskItem.task.updatedTime,
+                    text = "${taskItem.files.size} file(s)",
                     fontSize = 12.sp,
                     style = MaterialTheme.typography.labelSmall.copy(brush = brush)
                 )
             }
-            Spacer(modifier = Modifier.weight(1f))
-            ShowAvailableStatus(
-                iconSize = itemHeight * 0.5f,
-                status = getStatus(taskItem)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
         }
-    }
-}
-
-private fun getStatus(task: TaskAndFileModel): AvailableStatus {
-    val isTaskOnServer = task.task.isOnServer
-    val taskFilesOnServer = task.files.count { it.isOnServer }
-    return when {
-        isTaskOnServer && taskFilesOnServer == task.files.size -> AvailableStatus.OFFLINE_AND_ONLINE
-        isTaskOnServer || taskFilesOnServer > 0 -> AvailableStatus.PARTIAL
-        else -> AvailableStatus.OFFLINE
     }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun TaskItemPreview() {
-    TaskItem(parentY = 0f, parentHeight = 100, taskItem = TaskAndFileModel(
+    TaskItem(parentY = 0f, parentHeight = 100, taskItem = TaskAndFileEntity(
         TaskEntity(
             UUID.randomUUID(),
             "Hello world",
-            "",
-            true,
-            "2022:2143"
+            ""
         ),
         listOf(
             TaskFileEntity(
                 UUID.randomUUID(),
                 "",
-                false,
                 UUID.randomUUID()
             )
         )

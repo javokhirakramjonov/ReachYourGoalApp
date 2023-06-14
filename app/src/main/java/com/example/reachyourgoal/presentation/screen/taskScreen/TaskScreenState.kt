@@ -1,14 +1,11 @@
 package com.example.reachyourgoal.presentation.screen.taskScreen
 
-import com.example.reachyourgoal.domain.model.local.AvailableStatus
-import com.example.reachyourgoal.domain.model.local.TaskFileModel
+import android.net.Uri
 
 data class TaskScreenState(
-    val availableStatus: AvailableStatus,
-    val isLoading: Boolean,
     val taskName: String,
     val taskDescription: String,
-    val taskFiles: List<TaskFileModel>,
+    val taskFiles: List<Uri>,
     val taskNameError: String?,
     val taskDescriptionError: String?,
     val isFilesBeingSelected: Boolean

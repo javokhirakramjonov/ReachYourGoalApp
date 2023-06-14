@@ -3,7 +3,7 @@ package com.example.reachyourgoal.domain.model.databaseModel
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class TaskAndFileModel(
+data class TaskAndFileEntity(
     @Embedded val task: TaskEntity,
     @Relation(
         parentColumn = "task_id",

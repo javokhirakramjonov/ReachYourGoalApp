@@ -4,26 +4,15 @@ import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.example.reachyourgoal.common.BaseViewModel
 import com.example.reachyourgoal.common.Validators
-import com.example.reachyourgoal.domain.model.local.AvailableStatus
-import com.example.reachyourgoal.domain.model.local.TaskFileModel
 import com.example.reachyourgoal.domain.model.local.TaskModel
 import com.example.reachyourgoal.domain.repository.TaskRepository
-import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
 import com.example.reachyourgoal.util.EMPTY_STRING
-import com.example.reachyourgoal.util.within
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -35,13 +24,10 @@ class TaskScreenViewModel @Inject constructor(
 ) :
     BaseViewModel<TaskScreenState, TaskScreenEvent, TaskScreenEffect>() {
 
-    private var loadTaskJob: Job? = null
     private var taskId: UUID? = null
 
     private val _uiState = MutableStateFlow(
         TaskScreenState(
-            AvailableStatus.EDITING,
-            false,
             EMPTY_STRING,
             EMPTY_STRING,
             emptyList(),
@@ -64,25 +50,19 @@ class TaskScreenViewModel @Inject constructor(
             is TaskScreenEvent.OnTaskDescriptionChanged -> onTaskDescriptionChanged(event.taskDescription)
             is TaskScreenEvent.OnFilesAdded -> onFilesAdded(event.fileUris)
             is TaskScreenEvent.OnFileDeleted -> onFileDeleted(event.file)
-            is TaskScreenEvent.OnTaskEditing -> setTaskId(event.taskId)
-            TaskScreenEvent.OnCloseBtnClicked -> onCloseBtnClicked()
+            is TaskScreenEvent.OnTaskOpened -> onTaskOpened(event.taskId)
+            TaskScreenEvent.OnBackBtnClicked -> onCloseBtnClicked()
             TaskScreenEvent.OnSaveBtnClicked -> onSaveBtnClicked()
             TaskScreenEvent.OnDeleteAllFilesBtnClicked -> onDeleteAllFilesBtnClicked()
             TaskScreenEvent.OnAddFileBtnClicked -> onAddFileBtnClicked()
         }
     }
 
-    private fun setTaskId(taskId: UUID) {
-        this.taskId = taskId
-        loadTask()
-    }
-
     private fun onTaskNameChanged(taskName: String) {
         _uiState.update { state ->
             state.copy(
                 taskName = taskName,
-                taskNameError = null,
-                availableStatus = AvailableStatus.EDITING
+                taskNameError = null
             )
         }
     }
@@ -91,36 +71,27 @@ class TaskScreenViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 taskDescription = taskDescription,
-                taskDescriptionError = null,
-                availableStatus = AvailableStatus.EDITING
+                taskDescriptionError = null
             )
         }
     }
 
     private fun onFilesAdded(selectedFileUris: List<Uri>?) {
         _uiState.update { state ->
-            val fileUrisAndOnServerStatuses = state.taskFiles.toMutableList()
-            selectedFileUris?.let { uris ->
-                fileUrisAndOnServerStatuses.addAll(
-                    0,
-                    uris.map { uri -> TaskFileModel(uri, AvailableStatus.EDITING) })
-            }
+            val files = state.taskFiles.toMutableList()
+            files.addAll(0, selectedFileUris ?: emptyList())
             state.copy(
-                taskFiles = fileUrisAndOnServerStatuses,
-                isFilesBeingSelected = false,
-                availableStatus = AvailableStatus.EDITING
+                taskFiles = files,
+                isFilesBeingSelected = false
             )
         }
     }
 
-    private fun onFileDeleted(file: TaskFileModel) {
+    private fun onFileDeleted(file: Uri) {
         _uiState.update { state ->
-            val fileUrisAndOnServerStatuses = state.taskFiles.toMutableList()
-            fileUrisAndOnServerStatuses.remove(file)
-            state.copy(
-                taskFiles = fileUrisAndOnServerStatuses,
-                availableStatus = AvailableStatus.EDITING
-            )
+            val files = state.taskFiles.toMutableList()
+            files.remove(file)
+            state.copy(taskFiles = files)
         }
     }
 
@@ -133,91 +104,46 @@ class TaskScreenViewModel @Inject constructor(
     private fun onSaveBtnClicked() {
         validateTaskName()
         validateTaskDescription()
-        _uiState.value.within {
-            if (
-                listOfNotNull(
-                    taskNameError,
-                    taskDescriptionError
-                ).isNotEmpty()
-            ) {
-                return
-            }
+        val errors = _uiState.value.run {
+            listOfNotNull(
+                taskNameError,
+                taskDescriptionError
+            )
+        }
+        if (errors.isNotEmpty()) {
+            return
         }
         viewModelScope.launch(Dispatchers.IO) {
             val task = TaskModel(
                 _uiState.value.taskName,
                 _uiState.value.taskDescription,
-                _uiState.value.availableStatus,
                 _uiState.value.taskFiles
             )
 
             taskId?.let {
-                runCatching {
-                    taskRepository.saveTask(it, task)
-                }.getOrElse { error ->
-                    error.message?.let { errorMessage ->
-                        _uiEffect.emit(TaskScreenEffect.ShowErrorMessage(errorMessage))
-                    }
-                }
-            } ?: taskRepository.createTask(task)
-                .onStart {
-                    _uiState.update { state ->
-                        state.copy(isLoading = true)
-                    }
-                }
-                .onEach {
-                    when (it) {
-                        is SaveTaskResult.TaskSavedOffline -> {
-                            setTaskId(it.taskId)
-                        }
-                    }
-                }
-                .catch { error ->
-                    error.message?.let { errorMessage ->
-                        _uiEffect.emit(TaskScreenEffect.ShowErrorMessage(errorMessage))
-                    }
-                }
-                .onCompletion { error ->
-                    _uiState.update { state ->
-                        state.copy(isLoading = false)
-                    }
-                    error?.message?.let { errorMessage ->
-                        _uiEffect.emit(TaskScreenEffect.ShowErrorMessage(errorMessage))
-                    }
-                }
-                .collect()
+                taskRepository.saveTask(it, task)
+                _uiEffect.emit(TaskScreenEffect.ShowSuccessMessage("Task updated successfully."))
+            } ?: run {
+                taskId = taskRepository.createTask(task)
+                _uiEffect.emit(TaskScreenEffect.ShowSuccessMessage("Task created successfully."))
+            }
         }
     }
 
-    private fun loadTask() {
-        loadTaskJob?.cancel()
-        taskId?.let {
-            loadTaskJob = CoroutineScope(Dispatchers.IO).launch {
-                taskRepository
-                    .getTask(it)
-                    .onEach { taskAndFileModel ->
-                        _uiState.update { state ->
-                            state.copy(
-                                taskName = taskAndFileModel.task.name,
-                                taskDescription = taskAndFileModel.task.description,
-                                availableStatus = if (taskAndFileModel.task.isOnServer)
-                                    AvailableStatus.OFFLINE_AND_ONLINE
-                                else
-                                    AvailableStatus.OFFLINE,
-                                taskFiles = taskAndFileModel.files.map {
-                                    TaskFileModel(
-                                        Uri.parse(it.fileUri),
-                                        if (it.isOnServer)
-                                            AvailableStatus.OFFLINE_AND_ONLINE
-                                        else
-                                            AvailableStatus.OFFLINE
-                                    )
-                                }
-                            )
-                        }
+    private fun onTaskOpened(taskId: UUID) {
+        this.taskId = taskId
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository
+                .getTask(taskId)
+                .let { taskAndFileModel ->
+                    _uiState.update { state ->
+                        state.copy(
+                            taskName = taskAndFileModel.task.name,
+                            taskDescription = taskAndFileModel.task.description,
+                            taskFiles = taskAndFileModel.files.map { Uri.parse(it.fileUri) }
+                        )
                     }
-                    .collect()
-            }
+                }
         }
     }
 
@@ -243,11 +169,5 @@ class TaskScreenViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(isFilesBeingSelected = true)
         }
-    }
-
-    override fun onCleared() {
-        loadTaskJob?.cancel()
-        loadTaskJob = null
-        super.onCleared()
     }
 }

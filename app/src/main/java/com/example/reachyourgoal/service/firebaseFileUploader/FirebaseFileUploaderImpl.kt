@@ -2,13 +2,10 @@ package com.example.reachyourgoal.service.firebaseFileUploader
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
-import com.example.reachyourgoal.domain.model.remote.FirestoreTaskFileModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
-import com.example.reachyourgoal.domain.repository.impl.TaskRepositoryImpl.Companion.TASK_FILE_COLLECTION
 import com.example.reachyourgoal.service.FirebaseFileUploadService
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -50,20 +47,16 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     override suspend fun uploadFiles(taskId: UUID) {
-        taskDao
-            .getTaskFilesByTaskId(taskId)
-            .filterNot { it.isOnServer }
-            .forEach { taskFileEntity ->
-                val fileUploadModel = FileUploadModel(
-                    taskFileEntity.id,
-                    Uri.parse(taskFileEntity.fileUri),
-                    0,
-                    notificationId++,
-                    FileUploadState.NOT_STARTED
-                )
-                filesToUpload[fileUploadModel.notificationId] = fileUploadModel
-                startService(fileUploadModel.notificationId)
-            }
+        //TODO
+//        val fileUploadModel = FileUploadModel(
+//            taskFileEntity.id,
+//            Uri.parse(taskFileEntity.fileUri),
+//            0,
+//            notificationId++,
+//            FileUploadState.NOT_STARTED
+//        )
+//        filesToUpload[fileUploadModel.notificationId] = fileUploadModel
+//        startService(fileUploadModel.notificationId)
     }
 
     override fun startUploadFile(notificationId: Int) = callbackFlow {
@@ -112,24 +105,7 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     private suspend fun saveFileToFirestore(taskFileId: UUID, taskFileUrl: String) {
-        val taskFileEntity = taskDao.getTaskFileById(taskFileId)
-        val result = runCatching {
-            firestore
-                .collection(TASK_FILE_COLLECTION)
-                .document(taskFileId.toString())
-                .set(
-                    FirestoreTaskFileModel(
-                        authRepository.getEmail(),
-                        taskFileEntity.taskId,
-                        taskFileId,
-                        taskFileUrl
-                    )
-                )
-                .await()
-        }
-        if (result.isSuccess) {
-            taskDao.updateTaskUploadStatus(taskFileId, true)
-        }
+        //TODO
     }
 
     override fun pauseUploadFile(notificationId: Int): FileUploadModel {

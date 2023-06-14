@@ -1,5 +1,6 @@
 package com.example.reachyourgoal.presentation.screen.taskScreen
 
+import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.basicMarquee
@@ -48,13 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.reachyourgoal.domain.model.local.AvailableStatus
-import com.example.reachyourgoal.domain.model.local.TaskFileModel
 import com.example.reachyourgoal.ui.common.CustomSnackBarHost
 import com.example.reachyourgoal.ui.common.ErrorText
 import com.example.reachyourgoal.ui.common.FilePicker
-import com.example.reachyourgoal.ui.common.ShowAvailableStatus
-import com.example.reachyourgoal.ui.common.ShowLoading
 import com.example.reachyourgoal.ui.common.SnackBarStyles
 import com.example.reachyourgoal.ui.common.getFileIcon
 import com.example.reachyourgoal.util.getFileExtensionFromUri
@@ -79,7 +76,7 @@ fun TaskScreen(
 
     LaunchedEffect(true) {
         taskId?.let {
-            viewModel.onEvent(TaskScreenEvent.OnTaskEditing(it))
+            viewModel.onEvent(TaskScreenEvent.OnTaskOpened(it))
         }
 
         viewModel.uiEffect.collectLatest { effect ->
@@ -121,15 +118,6 @@ fun TaskScreen(
                     fontWeight = FontWeight.ExtraBold
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Box(
-                    modifier = Modifier.padding(start = 14.dp)
-                ) {
-                    ShowAvailableStatus(
-                        24.dp,
-                        status = uiState.availableStatus
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
                 TaskNameInput(
                     modifier = modifierForColumnElements, viewModel = viewModel, uiState = uiState
                 )
@@ -155,19 +143,17 @@ fun TaskScreen(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Button(modifier = Modifier.weight(1f),
-                        onClick = { viewModel.onEvent(TaskScreenEvent.OnCloseBtnClicked) }) {
+                        onClick = { viewModel.onEvent(TaskScreenEvent.OnBackBtnClicked) }) {
                         Text("Back")
                     }
                     Spacer(modifier = Modifier.width(20.dp))
-                    Button(modifier = Modifier.weight(1f),
+                    Button(
+                        modifier = Modifier.weight(1f),
                         onClick = { viewModel.onEvent(TaskScreenEvent.OnSaveBtnClicked) }) {
                         Text("Save task")
                     }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
-            }
-            if (uiState.isLoading) {
-                ShowLoading()
             }
 
             if (uiState.isFilesBeingSelected) {
@@ -195,8 +181,7 @@ private fun TaskNameInput(
         },
         isError = uiState.taskNameError != null,
         maxLines = 3,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-        enabled = uiState.isLoading.not()
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default)
     )
 }
 
@@ -216,8 +201,7 @@ private fun TaskDescriptionInput(
         },
         isError = uiState.taskDescriptionError != null,
         maxLines = 50,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default),
-        enabled = uiState.isLoading.not()
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Default)
     )
 }
 
@@ -243,7 +227,6 @@ private fun SelectedFiles(
             Text("Attached files")
             Spacer(modifier = Modifier.weight(1f))
             Button(
-                enabled = !uiState.isLoading,
                 onClick = { viewModel.onEvent(TaskScreenEvent.OnAddFileBtnClicked) }
             ) {
                 Text("Add files")
@@ -257,7 +240,7 @@ private fun SelectedFiles(
             items(uiState.taskFiles) {
                 FileElement(
                     modifier = Modifier.animateItemPlacement(),
-                    file = it
+                    fileUri = it
                 ) { deletedFile ->
                     viewModel.onEvent(TaskScreenEvent.OnFileDeleted(deletedFile))
                 }
@@ -270,13 +253,13 @@ private fun SelectedFiles(
 @Composable
 private fun FileElement(
     modifier: Modifier = Modifier,
-    file: TaskFileModel,
-    onDelete: (TaskFileModel) -> Unit
+    fileUri: Uri,
+    onDelete: (Uri) -> Unit
 ) {
 
     val contentResolver = LocalContext.current.contentResolver
-    val fileName = remember(file) { getFileNameFromUri(contentResolver, file.uri) }
-    val extension = remember(file) { getFileExtensionFromUri(contentResolver, file.uri) }
+    val fileName = remember(fileUri) { getFileNameFromUri(contentResolver, fileUri) }
+    val extension = remember(fileUri) { getFileExtensionFromUri(contentResolver, fileUri) }
 
     Row(
         modifier = modifier
@@ -297,21 +280,10 @@ private fun FileElement(
                 .basicMarquee(),
             text = "$fileName"
         )
-        Box(
-            Modifier
-                .weight(0.1f)
-                .padding(2.dp)
-        ) {
-            ShowAvailableStatus(
-                12.dp,
-                file.availableStatus
-            )
-        }
         Box(modifier = Modifier
-            .weight(0.1f)
             .padding(2.dp)
             .border(1.dp, MaterialTheme.colorScheme.error, CircleShape)
-            .clickable { onDelete(file) }
+            .clickable { onDelete(fileUri) }
             .padding(4.dp)
         ) {
             Icon(
@@ -326,6 +298,8 @@ private fun FileElement(
 @Preview
 @Composable
 private fun FileElementPreview() {
-    FileElement(file = TaskFileModel(File("Hello").toUri(), AvailableStatus.EDITING),
-        onDelete = {})
+    FileElement(
+        fileUri = File("Hello").toUri(),
+        onDelete = {}
+    )
 }

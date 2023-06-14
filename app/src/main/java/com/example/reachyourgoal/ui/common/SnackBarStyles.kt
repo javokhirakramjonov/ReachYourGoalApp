@@ -16,7 +16,7 @@ sealed class SnackBarStyles {
     class SuccessSnackBar(
         successMessage: String,
     ) : SnackbarVisuals {
-        override val actionLabel = "Ok"
+        override val actionLabel = ""
         override val duration = SnackbarDuration.Short
         override val message = successMessage
         override val withDismissAction = true

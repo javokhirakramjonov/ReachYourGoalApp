@@ -21,8 +21,6 @@ data class TaskFileEntity(
     val id: UUID = UUID.randomUUID(),
     @ColumnInfo(name = "file_uri")
     val fileUri: String,
-    @ColumnInfo(name = "is_on_server")
-    val isOnServer: Boolean,
     @ColumnInfo(name = "task_id")
     val taskId: UUID
 )

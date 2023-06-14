@@ -41,6 +41,7 @@ class TasksScreenViewModel @Inject constructor(
                     tasksRepository.deleteTask(event.taskId)
                 }
             }
+
             is TasksScreenEvent.OnOpenTask -> {
                 viewModelScope.launch {
                     _uiEffect.emit(TasksScreenEffect.OpenTask(event.taskId))
@@ -58,17 +59,13 @@ class TasksScreenViewModel @Inject constructor(
 
     private fun onLoadTasks() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
-                tasksRepository.synchronizeWithServer()
-            } catch (e: Throwable) {
-                e.message?.let { _uiEffect.emit(TasksScreenEffect.ShowErrorMessage(it)) }
-            }
+            //TODO LoadTasks from server too
             tasksRepository
                 .getAllTasksAndFiles()
                 .onEach { taskAndFileModel ->
                     _uiState.update { state ->
                         state.copy(
-                            tasks = taskAndFileModel.sortedByDescending { it.task.updatedTime }
+                            tasks = taskAndFileModel
                         )
                     }
                 }

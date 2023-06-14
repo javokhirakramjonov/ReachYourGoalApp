@@ -1,35 +1,25 @@
 package com.example.reachyourgoal.domain.repository.impl
 
 import com.example.reachyourgoal.data.dao.TaskDao
+import com.example.reachyourgoal.domain.model.databaseModel.PendingCreateTaskEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingDeleteTaskEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingUpdateTaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 import com.example.reachyourgoal.domain.model.local.TaskModel
-import com.example.reachyourgoal.domain.model.remote.FirestoreTaskModel
-import com.example.reachyourgoal.domain.repository.AuthRepository
 import com.example.reachyourgoal.domain.repository.TaskRepository
-import com.example.reachyourgoal.domain.repository.result.SaveTaskResult
-import com.example.reachyourgoal.service.NetworkStatusService
-import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
-import com.example.reachyourgoal.util.INTERNET_IS_NOT_AVAILABLE
-import com.example.reachyourgoal.util.getErrorMessageOrDefault
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.Calendar
 import java.util.UUID
 import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
-    private val networkStatusService: NetworkStatusService,
-    private val firebaseFileUploader: FirebaseFileUploader,
     private val taskDao: TaskDao
 ) : TaskRepository {
 
@@ -37,8 +27,7 @@ class TaskRepositoryImpl @Inject constructor(
         //Temporary
         CoroutineScope(Dispatchers.IO).launch {
             Firebase.auth.signInWithEmailAndPassword(
-                "javokhirakromjonov@gmail.com",
-                "javokhirakromjonov@gmail.com"
+                "javokhirakromjonov@gmail.com", "javokhirakromjonov@gmail.com"
             ).await()
         }
     }
@@ -47,57 +36,46 @@ class TaskRepositoryImpl @Inject constructor(
         const val TASK_FILE_COLLECTION = "task_files"
     }
 
-    override fun createTask(task: TaskModel) = flow {
+    override suspend fun createTask(task: TaskModel): UUID {
 
+        //Local
         val taskEntity = createTaskInDatabase(task)
 
-        emit(SaveTaskResult.TaskSavedOffline(taskEntity.id))
+        //Server
+        taskDao.insertPendingCreateTask(PendingCreateTaskEntity(taskEntity.id))
 
-        if (!networkStatusService.isInternetAvailable()) {
-            throw Exception(INTERNET_IS_NOT_AVAILABLE)
-        }
-
-        //saveTaskInFirebase(taskEntity.id, task)
-
-        //taskDao.updateTaskOnServerStatus(taskEntity.id, true)
-
-        //firebaseFileUploader.uploadFiles(taskEntity.id)
+        return taskEntity.id
     }
 
     override suspend fun saveTask(taskId: UUID, task: TaskModel) {
 
+        //Local
         updateTaskInDatabase(taskId, task)
 
-        if (!networkStatusService.isInternetAvailable()) {
-            throw Exception(INTERNET_IS_NOT_AVAILABLE)
-        }
-
-        //saveTaskInFirebase(taskId, task)
-
-        //taskDao.updateTaskOnServerStatus(taskId, true)
-
-        //firebaseFileUploader.uploadFiles(taskId)
+        //Server
+        val time = Calendar.getInstance().time.toString()
+        taskDao.insertPendingUpdateTask(PendingUpdateTaskEntity(taskId, time))
     }
 
     override suspend fun deleteTask(taskId: UUID) {
-        taskDao.deleteTask(taskId)
+        //Local
+        taskDao.deleteTaskByTaskId(taskId)
+
+        //Server
+        taskDao.insertPendingDeleteTask(PendingDeleteTaskEntity(taskId))
     }
 
     private suspend fun createTaskInDatabase(task: TaskModel): TaskEntity {
         val taskEntity = TaskEntity(
-            name = task.name,
-            description = task.description,
-            isOnServer = false
+            name = task.name, description = task.description
         )
 
-        taskDao.insertTask(taskEntity)
+        taskDao.upsertTask(taskEntity)
 
         task.taskFiles.forEach { taskFile ->
             taskDao.insertTaskFile(
                 TaskFileEntity(
-                    fileUri = taskFile.uri.toString(),
-                    isOnServer = false,
-                    taskId = taskEntity.id
+                    fileUri = taskFile.toString(), taskId = taskEntity.id
                 )
             )
         }
@@ -105,18 +83,11 @@ class TaskRepositoryImpl @Inject constructor(
         return taskEntity
     }
 
-    private suspend fun saveTaskInFirebase(taskId: UUID, task: TaskModel) {
-        //TODO
-    }
-
     private suspend fun updateTaskInDatabase(taskId: UUID, task: TaskModel) {
-        val taskEntity = taskDao.getTaskById(taskId)
 
-        taskDao.updateTask(
-            taskEntity.copy(
-                name = task.name,
-                description = task.description,
-                isOnServer = false
+        taskDao.upsertTask(
+            TaskEntity(
+                taskId, task.name, task.description
             )
         )
 
@@ -124,10 +95,10 @@ class TaskRepositoryImpl @Inject constructor(
         val taskFiles = task.taskFiles
 
         val fileEntityMap = taskFileEntities.associateBy { it.fileUri }
-        val fileMap = taskFiles.associateBy { it.uri.toString() }
+        val fileMap = taskFiles.associateBy { it.toString() }
 
         val deleteList = taskFileEntities.filterNot { fileMap.containsKey(it.fileUri) }
-        val insertList = taskFiles.filterNot { fileEntityMap.containsKey(it.uri.toString()) }
+        val insertList = taskFiles.filterNot { fileEntityMap.containsKey(it.toString()) }
 
         deleteList.forEach {
             taskDao.deleteTaskFile(it)
@@ -136,22 +107,15 @@ class TaskRepositoryImpl @Inject constructor(
         insertList.forEach {
             taskDao.insertTaskFile(
                 TaskFileEntity(
-                    fileUri = it.uri.toString(),
-                    isOnServer = false,
-                    taskId = taskId
+                    fileUri = it.toString(), taskId = taskId
                 )
             )
         }
     }
 
-    override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFileFlow(taskId)
+    override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFile(taskId)
 
-    override suspend fun synchronizeWithServer() {
-        //TODO
-    }
-
-    override fun getAllTasksAndFiles() = taskDao
-        .getTasksFlow()
+    override fun getAllTasksAndFiles() = taskDao.getTasksFlow()
         .map { taskList -> taskList.map { task -> taskDao.getTaskAndFile(task.id) } }
 
 }
