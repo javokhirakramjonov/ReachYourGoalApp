@@ -1,7 +1,8 @@
 package com.example.reachyourgoal.presentation.screen.tasksScreen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,7 +42,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -139,6 +139,7 @@ fun TasksScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TaskItem(
     parentY: Float,
@@ -183,16 +184,10 @@ private fun TaskItem(
             }
             .fillMaxWidth()
             .height(itemHeight)
-            .pointerInput(taskItem.task.id) {
-                detectTapGestures(
-                    onTap = {
-                        onSelect()
-                    },
-                    onLongPress = {
-                        onDelete()
-                    }
-                )
-            },
+            .combinedClickable(
+                onClick = onSelect,
+                onDoubleClick = onDelete
+            ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RectangleShape

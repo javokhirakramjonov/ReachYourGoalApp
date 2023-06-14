@@ -59,7 +59,7 @@ class TasksScreenViewModel @Inject constructor(
     private fun onLoadTasks() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                tasksRepository.loadTasksFromServer()
+                tasksRepository.synchronizeWithServer()
             } catch (e: Throwable) {
                 e.message?.let { _uiEffect.emit(TasksScreenEffect.ShowErrorMessage(it)) }
             }

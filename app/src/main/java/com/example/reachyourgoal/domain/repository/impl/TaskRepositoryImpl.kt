@@ -17,21 +17,24 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
 
 class TaskRepositoryImpl @Inject constructor(
-    private val authRepository: AuthRepository,
     private val networkStatusService: NetworkStatusService,
     private val firebaseFileUploader: FirebaseFileUploader,
     private val taskDao: TaskDao
 ) : TaskRepository {
 
     init {
+        //Temporary
         CoroutineScope(Dispatchers.IO).launch {
             Firebase.auth.signInWithEmailAndPassword(
                 "javokhirakromjonov@gmail.com",
@@ -40,10 +43,7 @@ class TaskRepositoryImpl @Inject constructor(
         }
     }
 
-    private val fireStore = Firebase.firestore
-
     companion object {
-        private const val TASK_COLLECTION = "tasks"
         const val TASK_FILE_COLLECTION = "task_files"
     }
 
@@ -57,11 +57,11 @@ class TaskRepositoryImpl @Inject constructor(
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
 
-        saveTaskInFirebase(taskEntity.id, task)
+        //saveTaskInFirebase(taskEntity.id, task)
 
-        taskDao.updateTaskOnServerStatus(taskEntity.id, true)
+        //taskDao.updateTaskOnServerStatus(taskEntity.id, true)
 
-        firebaseFileUploader.uploadFiles(taskEntity.id)
+        //firebaseFileUploader.uploadFiles(taskEntity.id)
     }
 
     override suspend fun saveTask(taskId: UUID, task: TaskModel) {
@@ -72,11 +72,11 @@ class TaskRepositoryImpl @Inject constructor(
             throw Exception(INTERNET_IS_NOT_AVAILABLE)
         }
 
-        saveTaskInFirebase(taskId, task)
+        //saveTaskInFirebase(taskId, task)
 
-        taskDao.updateTaskOnServerStatus(taskId, true)
+        //taskDao.updateTaskOnServerStatus(taskId, true)
 
-        firebaseFileUploader.uploadFiles(taskId)
+        //firebaseFileUploader.uploadFiles(taskId)
     }
 
     override suspend fun deleteTask(taskId: UUID) {
@@ -106,22 +106,7 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     private suspend fun saveTaskInFirebase(taskId: UUID, task: TaskModel) {
-        runCatching {
-            fireStore
-                .collection(TASK_COLLECTION)
-                .document(taskId.toString())
-                .set(
-                    FirestoreTaskModel(
-                        authRepository.getEmail(),
-                        taskId,
-                        task.name,
-                        task.description
-                    )
-                )
-                .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
-        }
+        //TODO
     }
 
     private suspend fun updateTaskInDatabase(taskId: UUID, task: TaskModel) {
@@ -161,33 +146,8 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun getTask(taskId: UUID) = taskDao.getTaskAndFileFlow(taskId)
 
-    override suspend fun loadTasksFromServer() {
-        if (!networkStatusService.isInternetAvailable()) {
-            throw Exception(INTERNET_IS_NOT_AVAILABLE)
-        }
-
-        val resultTask = runCatching {
-            fireStore
-                .collection(TASK_COLLECTION)
-                .whereEqualTo("email", authRepository.getEmail())
-                .get()
-                .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
-        }
-
-        resultTask
-            .map {
-                with(it.toObject(FirestoreTaskModel::class.java)) {
-                    TaskEntity(taskId, name, description, true)
-                }
-            }
-            .forEach {
-                //TODO update if it is newer than in local
-                taskDao.insertTask(it)
-            }
-
-        //TODO download task files
+    override suspend fun synchronizeWithServer() {
+        //TODO
     }
 
     override fun getAllTasksAndFiles() = taskDao
