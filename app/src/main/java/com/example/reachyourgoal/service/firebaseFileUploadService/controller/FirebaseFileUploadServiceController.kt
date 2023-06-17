@@ -1,7 +1,7 @@
-package com.example.reachyourgoal.service.controller
+package com.example.reachyourgoal.service.firebaseFileUploadService.controller
 
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
-import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.FirebaseFileUploader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

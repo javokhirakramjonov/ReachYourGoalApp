@@ -4,7 +4,7 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
-import com.example.reachyourgoal.service.FirebaseFileUploadService
+import com.example.reachyourgoal.service.firebaseFileUploadService.FirebaseFileUploadService
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp

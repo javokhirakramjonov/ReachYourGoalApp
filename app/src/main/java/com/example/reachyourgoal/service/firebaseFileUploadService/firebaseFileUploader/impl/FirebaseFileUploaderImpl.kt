@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.service.firebaseFileUploader
+package com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.impl
 
 import android.content.Context
 import android.content.Intent
@@ -8,7 +8,8 @@ import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
 import com.example.reachyourgoal.domain.repository.AuthRepository
-import com.example.reachyourgoal.service.FirebaseFileUploadService
+import com.example.reachyourgoal.service.firebaseFileUploadService.FirebaseFileUploadService
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.FirebaseFileUploader
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.UploadTask

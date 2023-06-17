@@ -1,4 +1,4 @@
-package com.example.reachyourgoal.service
+package com.example.reachyourgoal.service.firebaseFileUploadService
 
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.reachyourgoal.R
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
-import com.example.reachyourgoal.service.controller.FirebaseFileUploadServiceController
+import com.example.reachyourgoal.service.firebaseFileUploadService.controller.FirebaseFileUploadServiceController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
