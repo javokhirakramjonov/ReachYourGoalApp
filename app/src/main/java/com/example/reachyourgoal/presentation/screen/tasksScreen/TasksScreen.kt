@@ -76,18 +76,18 @@ fun TasksScreen(
     LaunchedEffect(key1 = true) {
         viewModel.onEvent(TasksScreenEvent.OnLoadTasks)
 
-        viewModel.uiEffect.collectLatest {
-            when (it) {
+        viewModel.uiEffect.collectLatest { effect ->
+            when (effect) {
                 is TasksScreenEffect.OpenTask -> {
-                    navigator.navigate(TaskScreenDestination(it.taskId))
+                    navigator.navigate(TaskScreenDestination(effect.taskId))
                 }
 
                 is TasksScreenEffect.ShowErrorMessage -> {
-                    snackBarHostState.showSnackbar(SnackBarStyles.ErrorSnackBar(it.errorMessage))
+                    snackBarHostState.showSnackbar(SnackBarStyles.ErrorSnackBar(effect.errorMessage))
                 }
 
                 is TasksScreenEffect.ShowSuccessMessage -> {
-                    snackBarHostState.showSnackbar(SnackBarStyles.SuccessSnackBar(it.successMessage))
+                    snackBarHostState.showSnackbar(SnackBarStyles.SuccessSnackBar(effect.successMessage))
                 }
             }
         }
@@ -107,10 +107,10 @@ fun TasksScreen(
                 Icon(imageVector = Icons.Filled.Add, contentDescription = null)
             }
         }
-    ) {
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(it)
+                .padding(paddingValues)
                 .fillMaxSize()
         ) {
             LazyColumn(

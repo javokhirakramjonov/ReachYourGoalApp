@@ -14,11 +14,11 @@ fun getFileExtensionFromUri(contentResolver: ContentResolver, uri: Uri): String?
 fun getFileNameFromUri(contentResolver: ContentResolver, uri: Uri): String? {
     var fileName: String? = null
     val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
-    cursor?.use {
-        if (it.moveToFirst()) {
-            val displayNameColumnIndex: Int = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+    cursor?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            val displayNameColumnIndex: Int = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (displayNameColumnIndex != -1) {
-                fileName = it.getString(displayNameColumnIndex)
+                fileName = cursor.getString(displayNameColumnIndex)
             }
         }
     }

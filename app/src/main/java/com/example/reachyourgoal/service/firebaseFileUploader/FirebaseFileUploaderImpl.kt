@@ -73,9 +73,9 @@ class FirebaseFileUploaderImpl @Inject constructor(
             .putFile(file.uri)
             .also { task ->
                 task
-                    .addOnProgressListener {
+                    .addOnProgressListener { taskSnapshot ->
                         filesToUpload[notificationId] = filesToUpload[notificationId]!!.copy(
-                            progress = ((it.bytesTransferred * 100) / it.totalByteCount).toInt(),
+                            progress = ((taskSnapshot.bytesTransferred * 100) / taskSnapshot.totalByteCount).toInt(),
                             state = FileUploadState.IN_PROGRESS
                         )
                         trySend(filesToUpload[notificationId]!!)
@@ -86,7 +86,7 @@ class FirebaseFileUploaderImpl @Inject constructor(
                         trySend(filesToUpload[notificationId]!!)
                         filesToUpload.remove(notificationId)
                     }
-                    .addOnSuccessListener {
+                    .addOnSuccessListener { taskSnapshot ->
                         filesToUpload[notificationId] =
                             filesToUpload[notificationId]!!.copy(state = FileUploadState.FINISHED)
                         trySend(filesToUpload[notificationId]!!)
@@ -96,11 +96,11 @@ class FirebaseFileUploaderImpl @Inject constructor(
                             filesToUpload.remove(notificationId)
 
                             runCatching {
-                                it.storage.downloadUrl.await()
+                                taskSnapshot.storage.downloadUrl.await()
                             }.getOrNull()?.let {
                                 saveFileToFirestore(
                                     taskFileId,
-                                    it.toString()
+                                    taskSnapshot.toString()
                                 )
                             }
                         }

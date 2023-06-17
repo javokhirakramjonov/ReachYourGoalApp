@@ -116,8 +116,8 @@ fun UserDetailsScreen(
 
     val scrollState = rememberScrollState()
 
-    Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) {
-        Surface(modifier = Modifier.padding(it)) {
+    Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) { paddingValues ->
+        Surface(modifier = Modifier.padding(paddingValues)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

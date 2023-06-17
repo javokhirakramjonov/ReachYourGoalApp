@@ -75,8 +75,8 @@ fun TaskScreen(
     val snackBarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(true) {
-        taskId?.let {
-            viewModel.onEvent(TaskScreenEvent.OnTaskOpened(it))
+        taskId?.let { taskId ->
+            viewModel.onEvent(TaskScreenEvent.OnTaskOpened(taskId))
         }
 
         viewModel.uiEffect.collectLatest { effect ->
@@ -104,8 +104,8 @@ fun TaskScreen(
         .fillMaxWidth()
         .padding(top = 4.dp, start = 14.dp, end = 14.dp)
 
-    Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) {
-        Surface(modifier = Modifier.padding(it)) {
+    Scaffold(snackbarHost = { CustomSnackBarHost(hostState = snackBarHostState) }) { paddingValues ->
+        Surface(modifier = Modifier.padding(paddingValues)) {
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -237,10 +237,10 @@ private fun SelectedFiles(
                 .fillMaxWidth()
                 .heightIn(max = 400.dp)
         ) {
-            items(uiState.taskFiles) {
+            items(uiState.taskFiles) { taskFileUri ->
                 FileElement(
                     modifier = Modifier.animateItemPlacement(),
-                    fileUri = it
+                    fileUri = taskFileUri
                 ) { deletedFile ->
                     viewModel.onEvent(TaskScreenEvent.OnFileDeleted(deletedFile))
                 }

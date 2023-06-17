@@ -120,8 +120,8 @@ class TaskScreenViewModel @Inject constructor(
                 _uiState.value.taskFiles
             )
 
-            taskId?.let {
-                taskRepository.saveTask(it, task)
+            taskId?.let { id ->
+                taskRepository.saveTask(id, task)
                 _uiEffect.emit(TaskScreenEffect.ShowSuccessMessage("Task updated successfully."))
             } ?: run {
                 taskId = taskRepository.createTask(task)
@@ -140,7 +140,7 @@ class TaskScreenViewModel @Inject constructor(
                         state.copy(
                             taskName = taskAndFileModel.task.name,
                             taskDescription = taskAndFileModel.task.description,
-                            taskFiles = taskAndFileModel.files.map { Uri.parse(it.fileUri) }
+                            taskFiles = taskAndFileModel.files.map { taskFile -> Uri.parse(taskFile.fileUri) }
                         )
                     }
                 }

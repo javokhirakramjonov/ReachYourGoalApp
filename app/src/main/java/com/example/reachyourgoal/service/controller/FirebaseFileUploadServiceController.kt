@@ -22,8 +22,8 @@ class FirebaseFileUploadServiceController @Inject constructor(
     fun startFileUpload(notificationId: Int) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
-            firebaseFileUploader.startUploadFile(notificationId).collect {
-                _uploadState.emit(it)
+            firebaseFileUploader.startUploadFile(notificationId).collect { fileUploadModel ->
+                _uploadState.emit(fileUploadModel)
             }
         }
     }

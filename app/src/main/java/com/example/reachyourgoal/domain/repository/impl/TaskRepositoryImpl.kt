@@ -93,20 +93,22 @@ class TaskRepositoryImpl @Inject constructor(
         val taskFileEntities = taskDao.getTaskFilesByTaskId(taskId)
         val taskFiles = task.taskFiles
 
-        val fileEntityMap = taskFileEntities.associateBy { it.fileUri }
-        val fileMap = taskFiles.associateBy { it.toString() }
+        val fileEntityMap = taskFileEntities.associateBy { taskFile -> taskFile.fileUri }
+        val fileMap = taskFiles.associateBy { taskFile -> taskFile.toString() }
 
-        val deleteList = taskFileEntities.filterNot { fileMap.containsKey(it.fileUri) }
-        val insertList = taskFiles.filterNot { fileEntityMap.containsKey(it.toString()) }
+        val deleteList =
+            taskFileEntities.filterNot { taskFile -> fileMap.containsKey(taskFile.fileUri) }
+        val insertList =
+            taskFiles.filterNot { taskFile -> fileEntityMap.containsKey(taskFile.toString()) }
 
-        deleteList.forEach {
-            taskDao.deleteTaskFile(it)
+        deleteList.forEach { taskFile ->
+            taskDao.deleteTaskFile(taskFile)
         }
 
-        insertList.forEach {
+        insertList.forEach { taskFileUri ->
             taskDao.insertTaskFile(
                 TaskFileEntity(
-                    fileUri = it.toString(),
+                    fileUri = taskFileUri.toString(),
                     taskId = taskId
                 )
             )
