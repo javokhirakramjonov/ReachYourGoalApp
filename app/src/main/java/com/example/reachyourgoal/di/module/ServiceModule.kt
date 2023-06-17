@@ -1,7 +1,7 @@
 package com.example.reachyourgoal.di.module
 
-import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
-import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploaderImpl
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.FirebaseFileUploader
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.impl.FirebaseFileUploaderImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

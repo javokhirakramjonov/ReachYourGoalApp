@@ -1,15 +1,15 @@
-package com.example.reachyourgoal.service.firebaseFileUploader
+package com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.impl
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.example.reachyourgoal.data.converters.toFirestoreTaskFile
 import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
-import com.example.reachyourgoal.domain.model.remote.FirestoreTaskFileModel
 import com.example.reachyourgoal.domain.repository.AuthRepository
-import com.example.reachyourgoal.domain.repository.impl.TaskRepositoryImpl.Companion.TASK_FILE_COLLECTION
-import com.example.reachyourgoal.service.FirebaseFileUploadService
+import com.example.reachyourgoal.service.firebaseFileUploadService.FirebaseFileUploadService
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.FirebaseFileUploader
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.UploadTask
@@ -50,20 +50,19 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     override suspend fun uploadFiles(taskId: UUID) {
-        taskDao
-            .getTaskFilesByTaskId(taskId)
-            .filterNot { it.isOnServer }
-            .forEach { taskFileEntity ->
-                val fileUploadModel = FileUploadModel(
-                    taskFileEntity.id,
-                    Uri.parse(taskFileEntity.fileUri),
-                    0,
-                    notificationId++,
-                    FileUploadState.NOT_STARTED
-                )
-                filesToUpload[fileUploadModel.notificationId] = fileUploadModel
-                startService(fileUploadModel.notificationId)
-            }
+        val taskFiles = taskDao.getTaskFilesByTaskId(taskId)
+
+        taskFiles.forEach { taskFile ->
+            val fileUploadModel = FileUploadModel(
+                taskId,
+                Uri.parse(taskFile.fileUri),
+                0,
+                notificationId++,
+                FileUploadState.NOT_STARTED
+            )
+            filesToUpload[fileUploadModel.notificationId] = fileUploadModel
+            startService(fileUploadModel.notificationId)
+        }
     }
 
     override fun startUploadFile(notificationId: Int) = callbackFlow {
@@ -75,9 +74,9 @@ class FirebaseFileUploaderImpl @Inject constructor(
             .putFile(file.uri)
             .also { task ->
                 task
-                    .addOnProgressListener {
+                    .addOnProgressListener { taskSnapshot ->
                         filesToUpload[notificationId] = filesToUpload[notificationId]!!.copy(
-                            progress = ((it.bytesTransferred * 100) / it.totalByteCount).toInt(),
+                            progress = ((taskSnapshot.bytesTransferred * 100) / taskSnapshot.totalByteCount).toInt(),
                             state = FileUploadState.IN_PROGRESS
                         )
                         trySend(filesToUpload[notificationId]!!)
@@ -88,7 +87,7 @@ class FirebaseFileUploaderImpl @Inject constructor(
                         trySend(filesToUpload[notificationId]!!)
                         filesToUpload.remove(notificationId)
                     }
-                    .addOnSuccessListener {
+                    .addOnSuccessListener { taskSnapshot ->
                         filesToUpload[notificationId] =
                             filesToUpload[notificationId]!!.copy(state = FileUploadState.FINISHED)
                         trySend(filesToUpload[notificationId]!!)
@@ -98,11 +97,11 @@ class FirebaseFileUploaderImpl @Inject constructor(
                             filesToUpload.remove(notificationId)
 
                             runCatching {
-                                it.storage.downloadUrl.await()
+                                taskSnapshot.storage.downloadUrl.await()
                             }.getOrNull()?.let {
                                 saveFileToFirestore(
                                     taskFileId,
-                                    it.toString()
+                                    taskSnapshot.toString()
                                 )
                             }
                         }
@@ -112,24 +111,17 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     private suspend fun saveFileToFirestore(taskFileId: UUID, taskFileUrl: String) {
-        val taskFileEntity = taskDao.getTaskFileById(taskFileId)
-        val result = runCatching {
-            firestore
-                .collection(TASK_FILE_COLLECTION)
-                .document(taskFileId.toString())
-                .set(
-                    FirestoreTaskFileModel(
-                        authRepository.getEmail(),
-                        taskFileEntity.taskId,
-                        taskFileId,
-                        taskFileUrl
-                    )
+        val taskFile = taskDao.getTaskFileById(taskFileId)
+        firestore
+            .collection(FILE_DIR)
+            .document(taskFileId.toString())
+            .set(
+                taskFile.toFirestoreTaskFile(
+                    context.contentResolver,
+                    authRepository.getUserId(),
+                    taskFileUrl
                 )
-                .await()
-        }
-        if (result.isSuccess) {
-            taskDao.updateTaskUploadStatus(taskFileId, true)
-        }
+            )
     }
 
     override fun pauseUploadFile(notificationId: Int): FileUploadModel {

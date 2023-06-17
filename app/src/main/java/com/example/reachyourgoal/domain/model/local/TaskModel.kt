@@ -1,8 +1,9 @@
 package com.example.reachyourgoal.domain.model.local
 
+import android.net.Uri
+
 data class TaskModel(
     val name: String,
     val description: String,
-    val availableStatus: AvailableStatus,
-    val taskFiles: List<TaskFileModel>
+    val taskFiles: List<Uri>
 )

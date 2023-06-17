@@ -1,7 +1,7 @@
-package com.example.reachyourgoal.service.controller
+package com.example.reachyourgoal.service.firebaseFileUploadService.controller
 
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
-import com.example.reachyourgoal.service.firebaseFileUploader.FirebaseFileUploader
+import com.example.reachyourgoal.service.firebaseFileUploadService.firebaseFileUploader.FirebaseFileUploader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,8 +22,8 @@ class FirebaseFileUploadServiceController @Inject constructor(
     fun startFileUpload(notificationId: Int) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.IO).launch {
-            firebaseFileUploader.startUploadFile(notificationId).collect {
-                _uploadState.emit(it)
+            firebaseFileUploader.startUploadFile(notificationId).collect { fileUploadModel ->
+                _uploadState.emit(fileUploadModel)
             }
         }
     }

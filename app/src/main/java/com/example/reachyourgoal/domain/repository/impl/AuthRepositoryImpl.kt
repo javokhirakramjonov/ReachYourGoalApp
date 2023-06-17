@@ -34,8 +34,8 @@ class AuthRepositoryImpl @Inject constructor(
             auth
                 .fetchSignInMethodsForEmail(email)
                 .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }.signInMethods
 
         runCatching {
@@ -47,8 +47,8 @@ class AuthRepositoryImpl @Inject constructor(
                 auth
                     .signInWithEmailAndPassword(email, password)
                     .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }
 
         val userDetailsResult = runCatching {
@@ -57,8 +57,8 @@ class AuthRepositoryImpl @Inject constructor(
                 .document(email)
                 .get()
                 .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }
         if (userDetailsResult.exists()) {
             emit(LoginResult.Success)
@@ -74,30 +74,30 @@ class AuthRepositoryImpl @Inject constructor(
 
         val imageUrl = userModel.imageUri?.runCatching {
             firebaseStorage
-                .child(getEmail())
+                .child(getUserId())
                 .putFile(this)
                 .await()
-        }?.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }?.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }?.runCatching {
             storage
                 .downloadUrl
                 .await()
-        }?.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }?.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }
 
         runCatching {
             firestore
                 .collection(COLLECTION_USER)
-                .document(getEmail())
+                .document(getUserId())
                 .set(userModel.copy(imageUri = imageUrl))
                 .await()
-        }.getOrElse {
-            throw Exception(getErrorMessageOrDefault(it))
+        }.getOrElse { throwable ->
+            throw Exception(getErrorMessageOrDefault(throwable))
         }
         emit(Result.success(Unit))
     }
 
-    override fun getEmail() = auth.currentUser!!.email!!
+    override fun getUserId() = auth.currentUser!!.uid
 }

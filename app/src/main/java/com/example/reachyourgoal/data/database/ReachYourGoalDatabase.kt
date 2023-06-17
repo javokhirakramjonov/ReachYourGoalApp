@@ -5,13 +5,28 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.reachyourgoal.data.converters.TaskFileListConverter
 import com.example.reachyourgoal.data.dao.TaskDao
+import com.example.reachyourgoal.domain.model.databaseModel.PendingCreateTaskEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingCreateTaskFileEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingDeleteTaskEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingDeleteTaskFileEntity
+import com.example.reachyourgoal.domain.model.databaseModel.PendingUpdateTaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskEntity
 import com.example.reachyourgoal.domain.model.databaseModel.TaskFileEntity
 
-@Database(entities = [TaskEntity::class, TaskFileEntity::class], version = 1)
+@Database(
+    entities = [
+        TaskEntity::class,
+        TaskFileEntity::class,
+        PendingCreateTaskEntity::class,
+        PendingUpdateTaskEntity::class,
+        PendingDeleteTaskEntity::class,
+        PendingCreateTaskFileEntity::class,
+        PendingDeleteTaskFileEntity::class
+    ],
+    version = 1
+)
 @TypeConverters(TaskFileListConverter::class)
 abstract class ReachYourGoalDatabase : RoomDatabase() {
 
@@ -29,34 +44,34 @@ abstract class ReachYourGoalDatabase : RoomDatabase() {
                     "reach_your_goal_database"
                 )
                     .fallbackToDestructiveMigration()
-                    .addCallback(object : Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            db.execSQL(
-                                """
-                                    CREATE TRIGGER task_added AFTER INSERT ON tasks
-                                    FOR EACH ROW
-                                    BEGIN
-                                        UPDATE tasks
-                                        SET updated_time = datetime('now', 'localtime')
-                                        WHERE task_id = NEW.task_id;
-                                    END;
-                                """.trimIndent()
-                            )
-                            db.execSQL(
-                                """
-                                    CREATE TRIGGER task_updated AFTER UPDATE ON tasks
-                                    FOR EACH ROW
-                                    BEGIN
-                                        UPDATE tasks
-                                        SET updated_time = datetime('now', 'localtime')
-                                        WHERE task_id = NEW.task_id AND 
-                                        (strftime('%s', datetime('now', 'localtime')) - strftime('%s', COALESCE(updated_time, strftime(datetime('now', 'localtime')) - 3)) > 1);
-                                    END;
-                                """.trimIndent()
-                            )
-                        }
-                    })
+//                    .addCallback(object : Callback() {
+//                        override fun onCreate(db: SupportSQLiteDatabase) {
+//                            super.onCreate(db)
+//                            db.execSQL(
+//                                """
+//                                    CREATE TRIGGER task_added AFTER INSERT ON tasks
+//                                    FOR EACH ROW
+//                                    BEGIN
+//                                        UPDATE tasks
+//                                        SET updated_time = datetime('now', 'localtime')
+//                                        WHERE task_id = NEW.task_id;
+//                                    END;
+//                                """.trimIndent()
+//                            )
+//                            db.execSQL(
+//                                """
+//                                    CREATE TRIGGER task_updated AFTER UPDATE ON tasks
+//                                    FOR EACH ROW
+//                                    BEGIN
+//                                        UPDATE tasks
+//                                        SET updated_time = datetime('now', 'localtime')
+//                                        WHERE task_id = NEW.task_id AND
+//                                        (strftime('%s', datetime('now', 'localtime')) - strftime('%s', COALESCE(updated_time, strftime(datetime('now', 'localtime')) - 3)) > 1);
+//                                    END;
+//                                """.trimIndent()
+//                            )
+//                        }
+//                    })
                     .build()
 
                 INSTANCE = instance
