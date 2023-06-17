@@ -12,6 +12,8 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -30,10 +32,6 @@ class TaskRepositoryImpl @Inject constructor(
                 "javokhirakromjonov@gmail.com", "javokhirakromjonov@gmail.com"
             ).await()
         }
-    }
-
-    companion object {
-        const val TASK_FILE_COLLECTION = "task_files"
     }
 
     override suspend fun createTask(task: TaskModel): UUID {
@@ -75,7 +73,8 @@ class TaskRepositoryImpl @Inject constructor(
         task.taskFiles.forEach { taskFile ->
             taskDao.insertTaskFile(
                 TaskFileEntity(
-                    fileUri = taskFile.toString(), taskId = taskEntity.id
+                    fileUri = taskFile.toString(),
+                    taskId = taskEntity.id
                 )
             )
         }
@@ -107,7 +106,8 @@ class TaskRepositoryImpl @Inject constructor(
         insertList.forEach {
             taskDao.insertTaskFile(
                 TaskFileEntity(
-                    fileUri = it.toString(), taskId = taskId
+                    fileUri = it.toString(),
+                    taskId = taskId
                 )
             )
         }
@@ -117,5 +117,9 @@ class TaskRepositoryImpl @Inject constructor(
 
     override fun getAllTasksAndFiles() = taskDao.getTasksFlow()
         .map { taskList -> taskList.map { task -> taskDao.getTaskAndFile(task.id) } }
+
+    override fun synchronizeWithServer(): Flow<Unit> = flow<Unit> {
+        //TODO
+    }
 
 }

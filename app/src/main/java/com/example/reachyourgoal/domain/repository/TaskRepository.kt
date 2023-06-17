@@ -16,4 +16,6 @@ interface TaskRepository {
     suspend fun getTask(taskId: UUID): TaskAndFileEntity
 
     fun getAllTasksAndFiles(): Flow<List<TaskAndFileEntity>>
+
+    fun synchronizeWithServer(): Flow<Unit>
 }

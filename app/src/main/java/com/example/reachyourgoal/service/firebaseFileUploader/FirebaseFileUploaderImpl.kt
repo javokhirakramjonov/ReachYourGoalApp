@@ -2,6 +2,8 @@ package com.example.reachyourgoal.service.firebaseFileUploader
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import com.example.reachyourgoal.data.converters.toFirestoreTaskFile
 import com.example.reachyourgoal.data.dao.TaskDao
 import com.example.reachyourgoal.domain.model.local.FileUploadModel
 import com.example.reachyourgoal.domain.model.local.FileUploadState
@@ -47,16 +49,19 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     override suspend fun uploadFiles(taskId: UUID) {
-        //TODO
-//        val fileUploadModel = FileUploadModel(
-//            taskFileEntity.id,
-//            Uri.parse(taskFileEntity.fileUri),
-//            0,
-//            notificationId++,
-//            FileUploadState.NOT_STARTED
-//        )
-//        filesToUpload[fileUploadModel.notificationId] = fileUploadModel
-//        startService(fileUploadModel.notificationId)
+        val taskFiles = taskDao.getTaskFilesByTaskId(taskId)
+
+        taskFiles.forEach { taskFile ->
+            val fileUploadModel = FileUploadModel(
+                taskId,
+                Uri.parse(taskFile.fileUri),
+                0,
+                notificationId++,
+                FileUploadState.NOT_STARTED
+            )
+            filesToUpload[fileUploadModel.notificationId] = fileUploadModel
+            startService(fileUploadModel.notificationId)
+        }
     }
 
     override fun startUploadFile(notificationId: Int) = callbackFlow {
@@ -105,7 +110,17 @@ class FirebaseFileUploaderImpl @Inject constructor(
     }
 
     private suspend fun saveFileToFirestore(taskFileId: UUID, taskFileUrl: String) {
-        //TODO
+        val taskFile = taskDao.getTaskFileById(taskFileId)
+        firestore
+            .collection(FILE_DIR)
+            .document(taskFileId.toString())
+            .set(
+                taskFile.toFirestoreTaskFile(
+                    context.contentResolver,
+                    authRepository.getUserId(),
+                    taskFileUrl
+                )
+            )
     }
 
     override fun pauseUploadFile(notificationId: Int): FileUploadModel {

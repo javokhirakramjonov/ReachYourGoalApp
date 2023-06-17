@@ -74,7 +74,7 @@ class AuthRepositoryImpl @Inject constructor(
 
         val imageUrl = userModel.imageUri?.runCatching {
             firebaseStorage
-                .child(getEmail())
+                .child(getUserId())
                 .putFile(this)
                 .await()
         }?.getOrElse {
@@ -90,7 +90,7 @@ class AuthRepositoryImpl @Inject constructor(
         runCatching {
             firestore
                 .collection(COLLECTION_USER)
-                .document(getEmail())
+                .document(getUserId())
                 .set(userModel.copy(imageUri = imageUrl))
                 .await()
         }.getOrElse {
@@ -99,5 +99,5 @@ class AuthRepositoryImpl @Inject constructor(
         emit(Result.success(Unit))
     }
 
-    override fun getEmail() = auth.currentUser!!.email!!
+    override fun getUserId() = auth.currentUser!!.uid
 }

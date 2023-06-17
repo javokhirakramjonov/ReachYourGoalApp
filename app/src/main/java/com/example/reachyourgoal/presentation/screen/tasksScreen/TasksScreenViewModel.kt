@@ -59,7 +59,8 @@ class TasksScreenViewModel @Inject constructor(
 
     private fun onLoadTasks() {
         viewModelScope.launch(Dispatchers.IO) {
-            //TODO LoadTasks from server too
+            tasksRepository.synchronizeWithServer()
+
             tasksRepository
                 .getAllTasksAndFiles()
                 .onEach { taskAndFileModel ->
